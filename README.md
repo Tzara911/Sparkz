@@ -1,4 +1,4 @@
-# Skarkz
+# Sparkz
 A web application that connects users based on the skills they want to teach and learn
 ## Git Workflow
 
