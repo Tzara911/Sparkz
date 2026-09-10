@@ -1,5 +1,5 @@
-# Skills-matching-app
-A web application that connects students based on the skills they want to teach and learn
+# Skarkz
+A web application that connects users based on the skills they want to teach and learn
 ## Git Workflow
 
 * Do not push directly to `main`.
