@@ -25,12 +25,6 @@ Build Tool: Maven
 - **A Google Cloud project with OAuth 2.0 credentials**, for Google sign-in
 - **A modern web browser** (Chrome, Firefox, Edge, etc.)
 
-### Run the app
-```bash
-./mvnw spring-boot:run
-```
-The app will start on http://localhost:8080
-
 ## Project Structure
 sparkz/
 ├── src/
@@ -45,3 +39,24 @@ sparkz/
 ├── mvnw / mvnw.cmd           # Maven wrapper scripts (Mac/Linux and Windows)
 ├── .gitignore                # Files excluded from Git
 └── README.md                 # Project documentation
+
+## Local Development Setup
+
+The project includes a shared VS Code launch configuration for connecting Spring Boot to the Supabase PostgreSQL database.
+
+### Setup
+
+1. Clone the repository and open the project folder containing `pom.xml` in VS Code.
+2. Install the **Extension Pack for Java**.
+3. Copy `.env.example` and rename the copy to `.env`.
+   - macOS/Linux: `cp .env.example .env`
+   - Windows PowerShell: `Copy-Item .env.example .env`
+4. Open `.env` and replace `YOUR_DATABASE_PASSWORD` with the database password shared privately by the team.
+5. Open **Run and Debug** in VS Code.
+6. Select **Run Sparkz** and click the green play button, or press `F5`.
+7. Wait for `Started SparkzApplication`.
+8. Open [http://localhost:8080/api/hello](http://localhost:8080/api/hello).
+
+The `Run Sparkz` configuration loads the local `.env` file automatically. Each developer only needs to create `.env` once.
+
+Never commit or share `.env`. If the database password changes, update the local `.env` file.
