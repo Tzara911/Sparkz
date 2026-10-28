@@ -122,6 +122,8 @@ with sends/acceptance. This change does not modify live RLS or live tables.
   `/api/match-session` exists only for the local/test demo.
 - **#7:** send to the POST API from a profile, or link to
   `/matches.html?receiverId=<uuid>&skillId=<id>` to prefill the form.
+  `/discovery.html` now sends directly through that API; see [discovery](discovery.md).
+  Both pages load `/sparkz-api.js` before their page script for shared authentication.
 - **#4:** the standalone responsive page and styles can be placed inside the shared
   navigation when it lands. Currently the repository has no shared layout.
 - **Blocked users:** validation is included because the supplied ERD has the table.

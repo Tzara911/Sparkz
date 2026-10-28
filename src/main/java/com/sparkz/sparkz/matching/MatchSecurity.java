@@ -18,7 +18,7 @@ public class MatchSecurity {
     SecurityFilterChain matchSecurity(HttpSecurity http,
             @Value("${sparkz.auth.issuer:}") String issuer,
             @Value("${sparkz.auth.audience:authenticated}") String audience) throws Exception {
-        http.securityMatcher("/api/match-requests", "/api/match-requests/**")
+        http.securityMatcher("/api/match-requests", "/api/match-requests/**", "/api/discovery", "/api/discovery/**")
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .csrf(csrf -> csrf.disable()); // Bearer tokens only; no cookie authentication.
         if (issuer.isBlank()) {

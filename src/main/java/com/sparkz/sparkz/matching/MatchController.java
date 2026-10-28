@@ -7,7 +7,6 @@ import java.security.Principal;
 import java.util.*;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/match-requests")
@@ -21,22 +20,17 @@ public class MatchController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public MatchRequest send(Principal principal, @Valid @RequestBody Send body) {
-        return service.send(user(principal), body.receiverId(), body.skillId());
+        return service.send(CurrentUser.id(principal), body.receiverId(), body.skillId());
     }
 
     @GetMapping
     public List<MatchRequest> list(Principal principal, @RequestParam Direction direction) {
-        return service.list(user(principal), direction == Direction.incoming);
+        return service.list(CurrentUser.id(principal), direction == Direction.incoming);
     }
 
     @PatchMapping("/{id}")
     public MatchRequest change(Principal principal, @PathVariable @Positive long id, @Valid @RequestBody Change body) {
-        return service.change(user(principal), id, body.status());
+        return service.change(CurrentUser.id(principal), id, body.status());
     }
 
-    private UUID user(Principal principal) {
-        if (principal == null || principal.getName() == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        try { return UUID.fromString(principal.getName()); }
-        catch (IllegalArgumentException e) { throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user identity"); }
-    }
 }

@@ -21,7 +21,7 @@ public class LocalMatchSecurity {
 
     @Bean
     SecurityFilterChain localSecurity(HttpSecurity http) throws Exception {
-        return http.authorizeHttpRequests(a -> a.requestMatchers("/matches.html", "/matches.js", "/matches.css").permitAll()
+        return http.authorizeHttpRequests(a -> a.requestMatchers("/matches.html", "/matches.js", "/matches.css", "/sparkz-api.js", "/discovery.html", "/discovery.js", "/discovery.css").permitAll()
                 .anyRequest().authenticated())
             .httpBasic(Customizer.withDefaults())
             .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))

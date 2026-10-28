@@ -1,5 +1,7 @@
 package com.sparkz.sparkz.matching;
 
+import com.sparkz.sparkz.discovery.*;
+
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jose.jwk.*;
@@ -22,7 +24,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = MatchController.class)
+@WebMvcTest(controllers = {MatchController.class, DiscoveryController.class})
 @Import(MatchSecurity.class)
 @ActiveProfiles("jwt-check")
 class MatchJwtTests {
@@ -55,6 +57,31 @@ class MatchJwtTests {
     @AfterAll static void stop() { SERVER.stop(0); }
     @Autowired MockMvc mvc;
     @MockitoBean MatchService service;
+    @MockitoBean DiscoveryService discovery;
+
+    @Test void discoveryUsesTheSameVerifiedJwtIdentity() throws Exception {
+        when(discovery.discover(USER, true, null, null, null, 0, 12))
+            .thenReturn(new DiscoveryProfile.Page(List.of(), 0, 12, false));
+        when(discovery.catalog(USER)).thenReturn(List.of());
+        for (boolean ec : List.of(false, true)) {
+            String bearer = "Bearer " + token(ec, b -> {});
+            mvc.perform(get("/api/discovery").header("Authorization", bearer))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.profiles").isEmpty());
+            mvc.perform(get("/api/discovery/skills").header("Authorization", bearer)).andExpect(status().isOk());
+        }
+        verify(discovery, times(2)).discover(USER, true, null, null, null, 0, 12);
+        verify(discovery, times(2)).catalog(USER);
+    }
+
+    @Test void discoveryRejectsMissingAndForgedTokens() throws Exception {
+        for (String path : List.of("/api/discovery", "/api/discovery/skills")) {
+            mvc.perform(get(path)).andExpect(status().isUnauthorized());
+            mvc.perform(get(path).header("Authorization", "Bearer forged-token")).andExpect(status().isUnauthorized());
+            mvc.perform(get(path).header("Authorization", "Bearer " + token(false, b -> b.audience("anon"))))
+                .andExpect(status().isUnauthorized());
+        }
+        verifyNoInteractions(discovery);
+    }
 
     @Test void acceptsRs256AndEs256WithVerifiedSubject() throws Exception {
         when(service.list(USER, true)).thenReturn(List.of());

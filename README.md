@@ -64,3 +64,9 @@ Never commit or share `.env`. If the database password changes, update the local
 
 Issue #8 adds sending, incoming/outgoing requests, and accept/decline/cancel actions.
 See [local demo, API contract, and Supabase integration notes](docs/match-requests.md).
+
+## Discovery and matching
+
+Issue #7 adds public profile browsing, reciprocal skill recommendations, skill/day
+filters, and sending requests through #8. Open `/discovery.html` in the local demo.
+See [discovery API, ranking, database contract, and integration notes](docs/discovery.md).
