@@ -1,5 +1,14 @@
 # Discovery and matching (Issue #7)
 
+## Temporary test frontend
+
+`discovery.html` and `matches.html` are temporary test pages for validating the
+Java APIs and the #7 → #8 workflow. Their HTML/CSS/JavaScript is a testing aid;
+the team's production frontend is still pending. Once it is ready, replace these
+pages with the production frontend and connect it to the existing discovery and
+match-request APIs, using the authentication contract below. The production design
+does not need to follow these test pages.
+
 ## Local demo
 
 With JDK 17 or later:

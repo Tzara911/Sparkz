@@ -69,4 +69,7 @@ See [local demo, API contract, and Supabase integration notes](docs/match-reques
 
 Issue #7 adds public profile browsing, reciprocal skill recommendations, skill/day
 filters, and sending requests through #8. Open `/discovery.html` in the local demo.
+The discovery and match-request pages are **temporary test versions** for backend
+integration testing. The team's production frontend will replace them and connect
+to the existing Java APIs when ready.
 See [discovery API, ranking, database contract, and integration notes](docs/discovery.md).

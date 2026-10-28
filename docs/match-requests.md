@@ -1,5 +1,9 @@
 # Match requests (Issue #8)
 
+`matches.html` is a temporary test page for backend integration testing. Once the
+production frontend is ready, it will replace this page and connect to the existing
+Java match-request API and authentication contract documented below.
+
 ## Run locally without Supabase
 
 Requires a **JDK** (not only a JRE), version 17 or later.
