@@ -25,8 +25,8 @@ public class MatchStore {
         return db.sql("""
             select count(*) from user_skills a join user_skills b on a.skill_id = b.skill_id
             where a.user_id = :a and b.user_id = :b and a.skill_id = :skill
-            and ((a.skill_type = 'Teaching' and b.skill_type = 'Learning')
-              or (a.skill_type = 'Learning' and b.skill_type = 'Teaching'))
+            and ((a.skill_type = 'teach' and b.skill_type = 'learn')
+              or (a.skill_type = 'learn' and b.skill_type = 'teach'))
             """).param("a", a).param("b", b).param("skill", skill).query(Long.class).single() > 0;
     }
 
@@ -41,7 +41,7 @@ public class MatchStore {
         return db.sql("""
             select count(*) from match_requests
             where ((sender_id = :a and receiver_id = :b) or (sender_id = :b and receiver_id = :a))
-              and status in ('Pending', 'Accepted')
+              and status in ('pending', 'accept')
             """).param("a", a).param("b", b).query(Long.class).single() > 0;
     }
 
@@ -60,7 +60,7 @@ public class MatchStore {
         org.springframework.jdbc.support.GeneratedKeyHolder keys = new org.springframework.jdbc.support.GeneratedKeyHolder();
         db.sql("""
             insert into match_requests(sender_id, receiver_id, skill_id, status, created_at, status_updated_at)
-            values (:sender, :receiver, :skill, 'Pending', :now, :now)
+            values (:sender, :receiver, :skill, 'pending', :now, :now)
             """).param("sender", sender).param("receiver", receiver).param("skill", skill)
             .param("now", java.sql.Timestamp.from(now)).update(keys, "request_id");
         return new MatchRequest(java.util.Objects.requireNonNull(keys.getKey()).longValue(),
@@ -70,14 +70,14 @@ public class MatchStore {
     public int transition(long id, MatchStatus status, java.time.Instant now) {
         return db.sql("""
             update match_requests set status = :status, status_updated_at = :now
-            where request_id = :id and status = 'Pending'
-            """).param("id", id).param("status", status.name())
+            where request_id = :id and status = 'pending'
+            """).param("id", id).param("status", status.databaseValue())
             .param("now", java.sql.Timestamp.from(now)).update();
     }
 
     private static MatchRequest map(java.sql.ResultSet rs, int row) throws java.sql.SQLException {
         return new MatchRequest(rs.getLong("request_id"), rs.getObject("sender_id", UUID.class),
-            rs.getObject("receiver_id", UUID.class), rs.getLong("skill_id"), MatchStatus.valueOf(rs.getString("status")),
+            rs.getObject("receiver_id", UUID.class), rs.getLong("skill_id"), MatchStatus.fromDatabaseValue(rs.getString("status")),
             rs.getTimestamp("created_at").toInstant(), rs.getTimestamp("status_updated_at").toInstant());
     }
 }

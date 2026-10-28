@@ -40,31 +40,45 @@ Only recipients accept/decline; only senders cancel; only pending requests chang
 Nonparticipants get 404. Invalid input gets 400; unauthorized actors get 403;
 duplicates and stale transitions get 409; ineligible pairs get 422.
 
-Both accounts must be `Active`, onboarded, and have the exact same school name in
+Both accounts must have database account status `active`, be onboarded, and have the exact same school name in
 `SPARKZ_SUPPORTED_SCHOOLS` (comma-separated allowlist). The **selected** skill must
-have opposite Teaching/Learning roles between the users. Either teaching direction
+have opposite `teach`/`learn` database roles between the users. Either teaching direction
 is allowed. Reciprocal skills are a recommendation priority in #7, not a request
 requirement. Blocks in either direction reject sends and acceptance. Acceptance
 rechecks eligibility, but decline/cancel remain available after eligibility changes.
 
 ## Supabase integration checklist
 
-The supplied ERD confirms relationships and bigint/UUID types, but truncates column
-names and does not show defaults or check constraints. The implementation uses this
-explicit contract; compare it with the actual DDL before production integration:
+The supplied Supabase column and constraint reports confirm the following contract.
+Names, types, defaults, identity IDs, role/status values, and the relevant primary
+and foreign keys have been checked against those reports:
 
 | Table | Columns read/written |
 | --- | --- |
-| profiles | `user_id uuid`, `account_status text` (`Active`), `onboarding_completed boolean`, `school_name text` |
+| profiles | `user_id uuid` references `auth.users(id)`, `account_status text` (`active` / `deactivated`, default `active`), `onboarding_completed boolean` (default `false`), `school_name text` (nullable) |
 | skills | `skill_id bigint` |
-| user_skills | `user_id uuid`, `skill_id bigint`, `skill_type text` (`Teaching` / `Learning`) |
-| match_requests | `request_id bigint` (database-generated), `sender_id uuid`, `receiver_id uuid`, `skill_id bigint`, `status text`, `created_at timestamptz`, `status_updated_at timestamptz` |
+| user_skills | `user_id uuid`, `skill_id bigint`, `skill_type text` (`teach` / `learn`); composite primary key on all three |
+| match_requests | `request_id bigint` (identity), `sender_id uuid`, `receiver_id uuid`, `skill_id bigint`, `status text` (default `pending`), `created_at timestamptz` and `status_updated_at timestamptz` (default `now()`) |
 | blocked_users | `blocker_id uuid`, `blocked_id uuid` |
 
-Database mapping SQL is isolated in `MatchStore`. Align any differing column names,
-status capitalization, identity defaults, or skill role values there and in fixtures.
-`db/local-schema.sql` is a local test fixture, **not** a Supabase migration. No SQL
-initialization runs under the normal application profile.
+The database's accepted status is literally `accept`, not `accepted`. Java maps
+between the database values and the existing API/UI labels without changing stored data:
+
+| API/UI label | Supabase value |
+| --- | --- |
+| `Pending` | `pending` |
+| `Accepted` | `accept` |
+| `Declined` | `declined` |
+| `Canceled` | `canceled` |
+
+`MatchStatus` owns this conversion and `MatchStore` owns the database SQL. Duplicate
+checks and the review-only partial index use `pending` and `accept`. Normal API
+responses continue to expose `Accepted`, so clients do not need a new status label.
+
+`db/local-schema.sql` is a reduced local test fixture, **not** a Supabase migration.
+It uses the supplied values/defaults and relevant checks/FKs. Unused profile fields
+and the cross-schema `auth.users` foreign key are omitted; demo identity columns
+allow explicit seed IDs. No SQL initialization runs under the normal application profile.
 
 To export the missing DDL details, run `db/inspect-match-schema.sql` in Supabase
 SQL Editor. It only reads column definitions, constraints, indexes, and RLS policies;
@@ -87,12 +101,13 @@ This requires Supabase asymmetric JWT signing keys and reachable JWKS. Legacy HS
 explicit trusted decoder integration with #5; do not merely decode tokens. Missing
 issuer configuration denies match API access; an empty school allowlist rejects sends.
 
-Review `db/supabase-match-guards.sql` against the actual schema and apply it manually
-after resolving pre-existing duplicate active pairs. The partial unique index prevents
+Existing indexes, RLS policies, backend grants, and live connectivity have not yet
+been verified. Review `db/supabase-match-guards.sql` against existing indexes and
+apply it manually after resolving pre-existing duplicate active pairs. The proposed partial unique index prevents
 both same-direction and opposite-direction Pending/Accepted duplicates, across skills.
 API transactions also lock profile rows in UUID order before checking/inserting, so
 concurrent API sends serialize even in the H2 demo. Status transitions use a conditional
-`UPDATE ... WHERE status = 'Pending'` to ensure one winner under concurrency.
+`UPDATE ... WHERE status = 'pending'` to ensure one winner under concurrency.
 
 Use a trusted backend database identity. Audit Supabase RLS and grants so browser clients
 cannot bypass backend rules with direct writes. Profile/skill/block writers should use
@@ -115,7 +130,11 @@ with sends/acceptance. This change does not modify live RLS or live tables.
 
 Tests cover persistence, incoming/outgoing isolation, all status actions, authorization,
 validation, both-direction duplicates/blocks, ineligible accounts/schools/skills,
-acceptance revalidation, and concurrent sends and terminal transitions. JWT HTTP tests additionally use locally signed RSA and EC tokens and a local JWKS
+acceptance revalidation, and concurrent sends and terminal transitions. Schema
+regression tests also read rows inserted with the database defaults, map existing
+`accept` rows, verify the stored values of each terminal transition, and confirm that
+same-role skills cannot match. JWT HTTP tests additionally use locally signed RSA and EC tokens and a local JWKS
 server to verify signature, issuer, audience, expiry, not-before, and UUID identity
-validation. H2 tests do not
-prove compatibility with unseen Supabase DDL or PostgreSQL partial-index behavior.
+validation. These tests validate the application against a fixture aligned with the
+supplied schema reports. They do not prove live Supabase connectivity, RLS/grants,
+or PostgreSQL partial-index behavior.

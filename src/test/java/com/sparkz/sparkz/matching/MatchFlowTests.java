@@ -5,6 +5,7 @@ import java.util.concurrent.*;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,8 +36,8 @@ class MatchFlowTests {
         db.sql("delete from match_requests").update();
         db.sql("delete from blocked_users").update();
         db.sql("delete from user_skills").update();
-        db.sql("update profiles set account_status = 'Active', onboarding_completed = true, school_name = 'Demo University'").update();
-        db.sql("insert into user_skills values (:a, 1, 'Teaching'), (:b, 1, 'Learning')")
+        db.sql("update profiles set account_status = default, onboarding_completed = true, school_name = 'Demo University'").update();
+        db.sql("insert into user_skills values (:a, 1, 'teach'), (:b, 1, 'learn')")
             .param("a", A).param("b", B).update();
     }
 
@@ -71,6 +72,53 @@ class MatchFlowTests {
         expect(409, () -> service.send(B, A, 1));
     }
 
+    @Test void requestsCreatedWithDatabaseDefaultsCanBeReadAndAccepted() throws Exception {
+        // Existing Supabase rows use lowercase defaults, independent of the Java API.
+        db.sql("insert into match_requests(sender_id, receiver_id, skill_id) values (:a, :b, 1)")
+            .param("a", A).param("b", B).update();
+        MatchRequest request = service.list(B, true).get(0);
+        assertThat(request.status()).isEqualTo(MatchStatus.Pending);
+        assertThat(request.createdAt()).isNotNull();
+        assertThat(request.statusUpdatedAt()).isNotNull();
+        expect(409, () -> service.send(A, B, 1));
+        expect(409, () -> service.send(B, A, 1));
+
+        mvc.perform(patch("/api/match-requests/" + request.id()).with(user(B.toString())).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"Accepted\"}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("Accepted"));
+        assertThat(db.sql("select status from match_requests where request_id = :id")
+            .param("id", request.id()).query(String.class).single()).isEqualTo("accept");
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Accepted,accept", "Declined,declined", "Canceled,canceled"})
+    void transitionsStoreSupabaseValuesAndPreserveApiLabels(MatchStatus next, String databaseValue) throws Exception {
+        MatchRequest request = service.send(A, B, 1);
+        assertThat(db.sql("select status from match_requests where request_id = :id")
+            .param("id", request.id()).query(String.class).single()).isEqualTo("pending");
+        service.change(next == MatchStatus.Canceled ? A : B, request.id(), next);
+        assertThat(db.sql("select status from match_requests where request_id = :id")
+            .param("id", request.id()).query(String.class).single()).isEqualTo(databaseValue);
+        mvc.perform(get("/api/match-requests?direction=incoming").with(user(B.toString())))
+            .andExpect(status().isOk()).andExpect(jsonPath("$[0].status").value(next.name()));
+    }
+
+    @Test void existingAcceptRowsPreventNewRequestsInEitherDirection() {
+        db.sql("insert into match_requests(sender_id, receiver_id, skill_id, status) values (:a, :b, 1, 'accept')")
+            .param("a", A).param("b", B).update();
+        MatchRequest request = service.list(A, false).get(0);
+        assertThat(request.status()).isEqualTo(MatchStatus.Accepted);
+        expect(409, () -> service.send(A, B, 1));
+        expect(409, () -> service.send(B, A, 1));
+        expect(409, () -> service.change(A, request.id(), MatchStatus.Canceled));
+    }
+
+    @Test void sameSkillWithSameRoleIsNotCompatible() {
+        db.sql("update user_skills set skill_type = 'teach' where user_id = :b").param("b", B).update();
+        expect(422, () -> service.send(A, B, 1));
+        expect(422, () -> service.send(B, A, 1));
+    }
+
     @Test void rolesAndNonparticipantsCannotChangeRequests() {
         MatchRequest r = service.send(A, B, 1);
         expect(403, () -> service.change(A, r.id(), MatchStatus.Accepted));
@@ -90,7 +138,7 @@ class MatchFlowTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"account_status = 'Inactive'", "onboarding_completed = false", "school_name = 'Other School'", "school_name = null"})
+    @ValueSource(strings = {"account_status = 'deactivated'", "onboarding_completed = false", "school_name = 'Other School'", "school_name = null"})
     void rejectsIneligibleAccounts(String mutation) {
         db.sql("update profiles set " + mutation + " where user_id = :b").param("b", B).update();
         expect(422, () -> service.send(A, B, 1));
@@ -113,7 +161,7 @@ class MatchFlowTests {
 
     @Test void eligibilityChangesDoNotPreventDeclineOrCancel() {
         MatchRequest r = service.send(A, B, 1);
-        db.sql("update profiles set account_status = 'Inactive' where user_id = :b").param("b", B).update();
+        db.sql("update profiles set account_status = 'deactivated' where user_id = :b").param("b", B).update();
         expect(422, () -> service.change(B, r.id(), MatchStatus.Accepted));
         assertThat(service.change(B, r.id(), MatchStatus.Declined).status()).isEqualTo(MatchStatus.Declined);
     }

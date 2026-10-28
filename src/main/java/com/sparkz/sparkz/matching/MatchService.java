@@ -51,7 +51,7 @@ public class MatchService {
         List<MatchStore.Profile> profiles = store.lockProfiles(a, b);
         if (profiles.size() != 2) throw error(HttpStatus.NOT_FOUND, "Profile not found");
         for (MatchStore.Profile profile : profiles) {
-            if (!"Active".equals(profile.accountStatus()) || !profile.onboarded())
+            if (!"active".equals(profile.accountStatus()) || !profile.onboarded())
                 throw error(HttpStatus.UNPROCESSABLE_ENTITY, "Both accounts must be active and onboarded");
         }
         String school = profiles.get(0).school();
