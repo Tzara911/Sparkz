@@ -1,7 +1,3 @@
-// Sparkz Group
-// This file contains the basic actions for skills.
-// Emilee Schultz
-
 package com.sparkz.sparkz;
 
 import java.util.List;
@@ -21,23 +17,7 @@ public class SkillService {
         return skillRepository.findAll();
     }
 
-    public Optional<Skill> getSkillById(Long id) {
-        return skillRepository.findById(id);
-    }
-
-    public List<Skill> getSkillsByUser(String userEmail) {
-        return skillRepository.findByUserEmail(userEmail);
-    }
-
-    public List<Skill> getSkillsByType(String skillType) {
-        return skillRepository.findBySkillTypeIgnoreCase(skillType);
-    }
-
-    public Skill saveSkill(Skill skill) {
-        return skillRepository.save(skill);
-    }
-
-    public void deleteSkill(Long id) {
-        skillRepository.deleteById(id);
+    public Optional<Skill> getSkillById(Long skillId) {
+        return skillRepository.findById(skillId);
     }
 }

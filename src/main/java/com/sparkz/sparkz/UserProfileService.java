@@ -1,11 +1,7 @@
-// Sparkz Group
-// This file contains the basic actions for user profiles.
-// Emilee Schultz
-
 package com.sparkz.sparkz;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,23 +13,15 @@ public class UserProfileService {
         this.userProfileRepository = userProfileRepository;
     }
 
-    public List<UserProfile> getAllUsers() {
-        return userProfileRepository.findAll();
-    }
-
-    public Optional<UserProfile> getUserById(Long id) {
-        return userProfileRepository.findById(id);
-    }
-
-    public Optional<UserProfile> getUserByEmail(String email) {
-        return userProfileRepository.findByEmail(email);
+    public Optional<UserProfile> getUserById(UUID userId) {
+        return userProfileRepository.findById(userId);
     }
 
     public UserProfile saveUser(UserProfile user) {
         return userProfileRepository.save(user);
     }
 
-    public void deleteUser(Long id) {
-        userProfileRepository.deleteById(id);
+    public void deleteUser(UUID userId) {
+        userProfileRepository.deleteById(userId);
     }
 }

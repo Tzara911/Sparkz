@@ -1,9 +1,6 @@
-// Sparkz Group
-// This file stores a skill that a user wants to teach or learn.
-// Emilee Schultz
-
 package com.sparkz.sparkz;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,56 +13,26 @@ public class Skill {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "skill_id")
+    private Long skillId;
 
-    private String name;
+    @Column(name = "skill_name", nullable = false)
+    private String skillName;
+
+    @Column(name = "description")
     private String description;
-    private String skillType;
-    private String userEmail;
 
     public Skill() {
     }
 
-    public Skill(String name, String description, String skillType, String userEmail) {
-        this.name = name;
-        this.description = description;
-        this.skillType = skillType;
-        this.userEmail = userEmail;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
+    public Skill(String skillName, String description) {
+        this.skillName = skillName;
         this.description = description;
     }
 
-    public String getSkillType() {
-        return skillType;
-    }
-
-    public void setSkillType(String skillType) {
-        this.skillType = skillType;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
-    }
+    public Long getSkillId() { return skillId; }
+    public String getSkillName() { return skillName; }
+    public void setSkillName(String skillName) { this.skillName = skillName; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }
