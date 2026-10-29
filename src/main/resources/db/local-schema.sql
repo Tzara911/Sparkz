@@ -2,6 +2,9 @@
 -- Not a migration; unrelated profile fields and the auth.users FK are omitted.
 create table profiles (
     user_id uuid primary key,
+    username text unique,
+    bio text,
+    email text,
     account_status text not null default 'active' check (account_status in ('active', 'deactivated')),
     onboarding_completed boolean not null default false,
     school_name text
@@ -35,4 +38,11 @@ create table blocked_users (
     created_at timestamp with time zone not null default current_timestamp,
     primary key(blocker_id, blocked_id),
     check (blocker_id <> blocked_id)
+);
+
+-- Public weekday contract; no detailed availability table is read by discovery.
+create table profile_available_days (
+    user_id uuid not null references profiles(user_id) on delete cascade,
+    day_of_week smallint not null check (day_of_week between 1 and 7),
+    primary key(user_id, day_of_week)
 );

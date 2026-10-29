@@ -1,5 +1,7 @@
 package com.sparkz.sparkz.matching;
 
+import com.sparkz.sparkz.discovery.*;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -10,12 +12,20 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = MatchController.class, properties = "sparkz.auth.issuer=")
+@WebMvcTest(controllers = {MatchController.class, DiscoveryController.class}, properties = "sparkz.auth.issuer=")
 @Import(MatchSecurity.class)
 @ActiveProfiles("security-check")
 class MatchSecurityTests {
     @Autowired MockMvc mvc;
     @MockitoBean MatchOperations service;
+    @MockitoBean DiscoveryService discovery;
+
+    @Test void missingIssuerAlsoDeniesDiscovery() throws Exception {
+        for (String path : java.util.List.of("/api/discovery", "/api/discovery/skills")) {
+            mvc.perform(get(path)).andExpect(status().isForbidden());
+            mvc.perform(get(path).header("Authorization", "Bearer forged-token")).andExpect(status().isForbidden());
+        }
+    }
 
     @Test void missingIssuerDeniesAnonymousAndForgedBearerTokens() throws Exception {
         mvc.perform(get("/api/match-requests?direction=incoming"))
