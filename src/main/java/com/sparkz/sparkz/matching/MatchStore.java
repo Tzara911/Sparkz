@@ -41,7 +41,7 @@ public class MatchStore {
         return db.sql("""
             select count(*) from match_requests
             where ((sender_id = :a and receiver_id = :b) or (sender_id = :b and receiver_id = :a))
-              and status in ('pending', 'accept')
+              and status in ('pending', 'accepted')
             """).param("a", a).param("b", b).query(Long.class).single() > 0;
     }
 

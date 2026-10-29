@@ -54,7 +54,7 @@ class MatchJwtTests {
     }
     @AfterAll static void stop() { SERVER.stop(0); }
     @Autowired MockMvc mvc;
-    @MockitoBean MatchService service;
+    @MockitoBean MatchOperations service;
 
     @Test void acceptsRs256AndEs256WithVerifiedSubject() throws Exception {
         when(service.list(USER, true)).thenReturn(List.of());

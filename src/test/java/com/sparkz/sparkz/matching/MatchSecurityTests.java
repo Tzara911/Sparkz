@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("security-check")
 class MatchSecurityTests {
     @Autowired MockMvc mvc;
-    @MockitoBean MatchService service;
+    @MockitoBean MatchOperations service;
 
     @Test void missingIssuerDeniesAnonymousAndForgedBearerTokens() throws Exception {
         mvc.perform(get("/api/match-requests?direction=incoming"))
