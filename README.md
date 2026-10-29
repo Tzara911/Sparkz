@@ -60,3 +60,7 @@ The project includes a shared VS Code launch configuration for connecting Spring
 The `Run Sparkz` configuration loads the local `.env` file automatically. Each developer only needs to create `.env` once.
 
 Never commit or share `.env`. If the database password changes, update the local `.env` file.
+## Match requests
+
+Issue #8 adds sending, incoming/outgoing requests, and accept/decline/cancel actions.
+See [local demo, API contract, and Supabase integration notes](docs/match-requests.md).
