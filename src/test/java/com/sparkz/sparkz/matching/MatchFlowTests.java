@@ -27,7 +27,7 @@ class MatchFlowTests {
     static final UUID A = UUID.fromString("00000000-0000-0000-0000-000000000001");
     static final UUID B = UUID.fromString("00000000-0000-0000-0000-000000000002");
     static final UUID C = UUID.fromString("00000000-0000-0000-0000-000000000003");
-    @Autowired MatchService service;
+    @Autowired MatchOperations service;
     @Autowired JdbcClient db;
     @Autowired MockMvc mvc;
 
@@ -54,22 +54,25 @@ class MatchFlowTests {
                 .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"Accepted\"}"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("Accepted"));
         assertThat(service.list(B, true).get(0).status()).isEqualTo(MatchStatus.Accepted);
-        expect(409, () -> service.send(B, A, 1));
+        mvc.perform(patch("/api/match-requests/" + request.id()).with(user(B.toString())).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"Pending\"}"))
+            .andExpect(status().isBadRequest());
+        expect(409, () -> service.sendRequest(B, A, 1));
     }
 
     @Test void terminalStatesAndNewRequests() {
-        MatchRequest first = service.send(A, B, 1);
-        service.change(B, first.id(), MatchStatus.Declined);
-        expect(409, () -> service.change(A, first.id(), MatchStatus.Canceled));
-        MatchRequest second = service.send(B, A, 1);
-        service.change(B, second.id(), MatchStatus.Canceled);
-        assertThat(service.send(A, B, 1).status()).isEqualTo(MatchStatus.Pending);
+        MatchRequest first = service.sendRequest(A, B, 1);
+        service.declineRequest(B, first.id());
+        expect(409, () -> service.cancelRequest(A, first.id()));
+        MatchRequest second = service.sendRequest(B, A, 1);
+        service.cancelRequest(B, second.id());
+        assertThat(service.sendRequest(A, B, 1).status()).isEqualTo(MatchStatus.Pending);
     }
 
     @Test void rejectsDuplicatesInBothDirections() {
-        service.send(A, B, 1);
-        expect(409, () -> service.send(A, B, 1));
-        expect(409, () -> service.send(B, A, 1));
+        service.sendRequest(A, B, 1);
+        expect(409, () -> service.sendRequest(A, B, 1));
+        expect(409, () -> service.sendRequest(B, A, 1));
     }
 
     @Test void requestsCreatedWithDatabaseDefaultsCanBeReadAndAccepted() throws Exception {
@@ -80,90 +83,92 @@ class MatchFlowTests {
         assertThat(request.status()).isEqualTo(MatchStatus.Pending);
         assertThat(request.createdAt()).isNotNull();
         assertThat(request.statusUpdatedAt()).isNotNull();
-        expect(409, () -> service.send(A, B, 1));
-        expect(409, () -> service.send(B, A, 1));
+        expect(409, () -> service.sendRequest(A, B, 1));
+        expect(409, () -> service.sendRequest(B, A, 1));
 
         mvc.perform(patch("/api/match-requests/" + request.id()).with(user(B.toString())).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"Accepted\"}"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("Accepted"));
         assertThat(db.sql("select status from match_requests where request_id = :id")
-            .param("id", request.id()).query(String.class).single()).isEqualTo("accept");
+            .param("id", request.id()).query(String.class).single()).isEqualTo("accepted");
     }
 
     @ParameterizedTest
-    @CsvSource({"Accepted,accept", "Declined,declined", "Canceled,canceled"})
+    @CsvSource({"Accepted,accepted", "Declined,declined", "Canceled,canceled"})
     void transitionsStoreSupabaseValuesAndPreserveApiLabels(MatchStatus next, String databaseValue) throws Exception {
-        MatchRequest request = service.send(A, B, 1);
+        MatchRequest request = service.sendRequest(A, B, 1);
         assertThat(db.sql("select status from match_requests where request_id = :id")
             .param("id", request.id()).query(String.class).single()).isEqualTo("pending");
-        service.change(next == MatchStatus.Canceled ? A : B, request.id(), next);
+        UUID actor = next == MatchStatus.Canceled ? A : B;
+        mvc.perform(patch("/api/match-requests/" + request.id()).with(user(actor.toString())).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"" + next.name() + "\"}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.status").value(next.name()));
         assertThat(db.sql("select status from match_requests where request_id = :id")
             .param("id", request.id()).query(String.class).single()).isEqualTo(databaseValue);
         mvc.perform(get("/api/match-requests?direction=incoming").with(user(B.toString())))
             .andExpect(status().isOk()).andExpect(jsonPath("$[0].status").value(next.name()));
     }
 
-    @Test void existingAcceptRowsPreventNewRequestsInEitherDirection() {
-        db.sql("insert into match_requests(sender_id, receiver_id, skill_id, status) values (:a, :b, 1, 'accept')")
+    @Test void existingAcceptedRowsPreventNewRequestsInEitherDirection() {
+        db.sql("insert into match_requests(sender_id, receiver_id, skill_id, status) values (:a, :b, 1, 'accepted')")
             .param("a", A).param("b", B).update();
         MatchRequest request = service.list(A, false).get(0);
         assertThat(request.status()).isEqualTo(MatchStatus.Accepted);
-        expect(409, () -> service.send(A, B, 1));
-        expect(409, () -> service.send(B, A, 1));
-        expect(409, () -> service.change(A, request.id(), MatchStatus.Canceled));
+        expect(409, () -> service.sendRequest(A, B, 1));
+        expect(409, () -> service.sendRequest(B, A, 1));
+        expect(409, () -> service.cancelRequest(A, request.id()));
     }
 
     @Test void sameSkillWithSameRoleIsNotCompatible() {
         db.sql("update user_skills set skill_type = 'teach' where user_id = :b").param("b", B).update();
-        expect(422, () -> service.send(A, B, 1));
-        expect(422, () -> service.send(B, A, 1));
+        expect(422, () -> service.sendRequest(A, B, 1));
+        expect(422, () -> service.sendRequest(B, A, 1));
     }
 
     @Test void rolesAndNonparticipantsCannotChangeRequests() {
-        MatchRequest r = service.send(A, B, 1);
-        expect(403, () -> service.change(A, r.id(), MatchStatus.Accepted));
-        expect(403, () -> service.change(A, r.id(), MatchStatus.Declined));
-        expect(403, () -> service.change(B, r.id(), MatchStatus.Canceled));
-        expect(404, () -> service.change(C, r.id(), MatchStatus.Accepted));
-        expect(400, () -> service.change(B, r.id(), MatchStatus.Pending));
+        MatchRequest r = service.sendRequest(A, B, 1);
+        expect(403, () -> service.acceptRequest(A, r.id()));
+        expect(403, () -> service.declineRequest(A, r.id()));
+        expect(403, () -> service.cancelRequest(B, r.id()));
+        expect(404, () -> service.acceptRequest(C, r.id()));
         assertThat(service.list(A, false).get(0).status()).isEqualTo(MatchStatus.Pending);
     }
 
     @Test void rejectsSelfUnknownAndIncompatibleSkill() {
-        expect(400, () -> service.send(A, A, 1));
-        expect(404, () -> service.send(A, C, 1));
-        expect(422, () -> service.send(A, B, 2));
+        expect(400, () -> service.sendRequest(A, A, 1));
+        expect(404, () -> service.sendRequest(A, C, 1));
+        expect(422, () -> service.sendRequest(A, B, 2));
         db.sql("delete from user_skills where user_id = :b").param("b", B).update();
-        expect(422, () -> service.send(A, B, 1));
+        expect(422, () -> service.sendRequest(A, B, 1));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"account_status = 'deactivated'", "onboarding_completed = false", "school_name = 'Other School'", "school_name = null"})
     void rejectsIneligibleAccounts(String mutation) {
         db.sql("update profiles set " + mutation + " where user_id = :b").param("b", B).update();
-        expect(422, () -> service.send(A, B, 1));
-        expect(422, () -> service.send(B, A, 1));
+        expect(422, () -> service.sendRequest(A, B, 1));
+        expect(422, () -> service.sendRequest(B, A, 1));
     }
 
     @Test void rejectsUnsupportedSameSchool() {
         db.sql("update profiles set school_name = 'Unsupported'").update();
-        expect(422, () -> service.send(A, B, 1));
+        expect(422, () -> service.sendRequest(A, B, 1));
     }
 
     @Test void blockedBothDirectionsAndRevalidatedOnAccept() {
-        MatchRequest request = service.send(A, B, 1);
+        MatchRequest request = service.sendRequest(A, B, 1);
         db.sql("insert into blocked_users(blocker_id, blocked_id) values (:a, :b)").param("a", B).param("b", A).update();
-        expect(422, () -> service.change(B, request.id(), MatchStatus.Accepted));
-        service.change(A, request.id(), MatchStatus.Canceled);
-        expect(422, () -> service.send(A, B, 1));
-        expect(422, () -> service.send(B, A, 1));
+        expect(422, () -> service.acceptRequest(B, request.id()));
+        service.cancelRequest(A, request.id());
+        expect(422, () -> service.sendRequest(A, B, 1));
+        expect(422, () -> service.sendRequest(B, A, 1));
     }
 
     @Test void eligibilityChangesDoNotPreventDeclineOrCancel() {
-        MatchRequest r = service.send(A, B, 1);
+        MatchRequest r = service.sendRequest(A, B, 1);
         db.sql("update profiles set account_status = 'deactivated' where user_id = :b").param("b", B).update();
-        expect(422, () -> service.change(B, r.id(), MatchStatus.Accepted));
-        assertThat(service.change(B, r.id(), MatchStatus.Declined).status()).isEqualTo(MatchStatus.Declined);
+        expect(422, () -> service.acceptRequest(B, r.id()));
+        assertThat(service.declineRequest(B, r.id()).status()).isEqualTo(MatchStatus.Declined);
     }
 
     @Test void validatesHttpInputAndAuthentication() throws Exception {
@@ -182,16 +187,16 @@ class MatchFlowTests {
     }
 
     @Test void concurrentOppositeSendsCreateOnlyOnePendingRequest() throws Exception {
-        List<Integer> results = race(() -> { service.send(A, B, 1); return 201; },
-                                     () -> { service.send(B, A, 1); return 201; });
+        List<Integer> results = race(() -> { service.sendRequest(A, B, 1); return 201; },
+                                     () -> { service.sendRequest(B, A, 1); return 201; });
         assertThat(results).containsExactlyInAnyOrder(201, 409);
         assertThat(db.sql("select count(*) from match_requests").query(Long.class).single()).isEqualTo(1);
     }
 
     @Test void concurrentAcceptAndCancelHaveOnlyOneWinner() throws Exception {
-        MatchRequest r = service.send(A, B, 1);
-        List<Integer> results = race(() -> { service.change(B, r.id(), MatchStatus.Accepted); return 200; },
-                                     () -> { service.change(A, r.id(), MatchStatus.Canceled); return 200; });
+        MatchRequest r = service.sendRequest(A, B, 1);
+        List<Integer> results = race(() -> { service.acceptRequest(B, r.id()); return 200; },
+                                     () -> { service.cancelRequest(A, r.id()); return 200; });
         assertThat(results).containsExactlyInAnyOrder(200, 409);
     }
 

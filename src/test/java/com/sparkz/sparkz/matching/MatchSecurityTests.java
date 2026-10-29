@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("security-check")
 class MatchSecurityTests {
     @Autowired MockMvc mvc;
-    @MockitoBean MatchService service;
+    @MockitoBean MatchOperations service;
     @MockitoBean DiscoveryService discovery;
 
     @Test void missingIssuerAlsoDeniesDiscovery() throws Exception {

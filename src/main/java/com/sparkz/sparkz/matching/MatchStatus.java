@@ -1,7 +1,7 @@
 package com.sparkz.sparkz.matching;
 
 public enum MatchStatus {
-    Pending("pending"), Accepted("accept"), Declined("declined"), Canceled("canceled");
+    Pending("pending"), Accepted("accepted"), Declined("declined"), Canceled("canceled");
 
     private final String databaseValue;
 

@@ -39,7 +39,7 @@ public class DiscoveryStore {
                   and not exists (select 1 from blocked_users b where
                       (b.blocker_id = :viewer and b.blocked_id = p.user_id)
                       or (b.blocker_id = p.user_id and b.blocked_id = :viewer))
-                  and not exists (select 1 from match_requests m where m.status in ('pending', 'accept')
+                  and not exists (select 1 from match_requests m where m.status in ('pending', 'accepted')
                       and ((m.sender_id = :viewer and m.receiver_id = p.user_id)
                         or (m.receiver_id = :viewer and m.sender_id = p.user_id)))
             """;
@@ -64,18 +64,18 @@ public class DiscoveryStore {
 
     public List<UserSkill> skills(Collection<UUID> users) {
         return db.sql("""
-            select us.user_id, us.skill_type, s.skill_id, s.skill_name
+            select us.user_id, us.skill_type, s.skill_id, s.skill_name, s.description
             from user_skills us join skills s on s.skill_id = us.skill_id
             where us.user_id in (:users) order by lower(s.skill_name), s.skill_id
             """).param("users", users).query((rs, row) -> new UserSkill(rs.getObject("user_id", UUID.class),
-                rs.getString("skill_type"), new DiscoveryProfile.Skill(rs.getLong("skill_id"), rs.getString("skill_name")))).list();
+                rs.getString("skill_type"), new DiscoveryProfile.Skill(rs.getLong("skill_id"), rs.getString("skill_name"), rs.getString("description")))).list();
     }
     public List<UserDay> days(Collection<UUID> users) {
         return db.sql("select user_id, day_of_week from profile_available_days where user_id in (:users) order by day_of_week")
             .param("users", users).query((rs, row) -> new UserDay(rs.getObject("user_id", UUID.class), rs.getInt("day_of_week"))).list();
     }
     public List<DiscoveryProfile.Skill> catalog() {
-        return db.sql("select skill_id, skill_name from skills order by lower(skill_name), skill_id")
-            .query((rs, row) -> new DiscoveryProfile.Skill(rs.getLong("skill_id"), rs.getString("skill_name"))).list();
+        return db.sql("select skill_id, skill_name, description from skills order by lower(skill_name), skill_id")
+            .query((rs, row) -> new DiscoveryProfile.Skill(rs.getLong("skill_id"), rs.getString("skill_name"), rs.getString("description"))).list();
     }
 }

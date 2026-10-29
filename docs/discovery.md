@@ -53,7 +53,7 @@ values return 400. Missing/invalid authentication returns 401 when JWT is config
 missing issuer fails closed with 403. Missing viewer profile returns 404, and
 ineligible viewer returns 422. Candidates must be active, onboarded, from the
 viewer's exact school, and not the viewer. Either direction of a block excludes a
-candidate. Existing `pending` or `accept` pairs are excluded in both directions,
+candidate. Existing `pending` or `accepted` pairs are excluded in both directions,
 regardless of skill, matching #8's duplicate rule.
 
 Both modes sort by:
@@ -72,7 +72,7 @@ results; refresh after edits.
 The response is `{profiles: [...], page, size, hasNext}`. Each profile contains only
 `userId`, `username`, `bio`, `schoolName`, `teachingSkills`, `learningSkills`,
 `availableDays`, `learnFromThem`, `teachThem`, `commonDays`, and `reciprocal`.
-Skill entries are `{id, name}` using the existing `skills.skill_id`.
+Skill entries are `{id, name, description}` using the existing `skills.skill_id`.
 `learnFromThem` lists skills the candidate teaches and the viewer learns;
 `teachThem` is the reverse. These arrays and `commonDays` explain the recommendation.
 
@@ -81,23 +81,25 @@ It applies the same viewer authentication and eligibility checks.
 
 ## Database contract and privacy
 
-The implementation uses the schema/constraint reports supplied from Supabase:
+The implementation uses the latest SQL export supplied from Supabase. In
+particular, active statuses are pending/accepted; older reports used accept:
 
 | Table | Fields used |
 | --- | --- |
 | `profiles` | `user_id`, `username`, `bio`, `school_name`, `account_status`, `onboarding_completed` |
-| `skills` | `skill_id`, `skill_name` |
+| `skills` | `skill_id`, `skill_name`, nullable `description` |
 | `user_skills` | `user_id`, `skill_id`, `skill_type` (`teach` / `learn`) |
-| `profile_available_days` | `user_id`, `day_of_week` (1–7), composite primary key; user FK to `profiles` with cascade |
+| `profile_available_days` | `user_id`, `day_of_week` (1–7), composite primary key; user FK to `profiles` |
 | `blocked_users` | `blocker_id`, `blocked_id` |
-| `match_requests` | `sender_id`, `receiver_id`, `status` (`pending` / `accept` are active) |
+| `match_requests` | `sender_id`, `receiver_id`, `status` (`pending` / `accepted` are active) |
 
 The weekday check confirms the numeric range; it does not assign weekday names.
 This API defines ISO weekday numbering (Monday = 1, Sunday = 7), which #6/#16/#17
 must also use when saving availability. Confirm existing data follows that convention
 before live integration; this change does not renumber stored values.
 
-Discovery never queries `profile_available_slots`, email, phone, address, date of
+Discovery never queries `profile_available_slots`, `profile_unavailable_slots`,
+email, phone, address, date of
 birth, or other private profile fields. It uses an explicit public projection rather
 than serializing database rows. User-provided names and biographies render as text.
 General available days are hints, not detailed scheduling commitments.
@@ -132,3 +134,31 @@ Automated coverage includes ranking, filter combinations, stable pagination, pri
 ineligible/blocked users, both-direction active pairs, missing availability, invalid
 queries, JWT protection, and the discovery → send → cancel/decline/accept flow. The
 existing #8 tests run alongside these checks to catch regressions.
+
+
+## Class diagram alignment
+
+`DiscoveryProfile` and its nested Skill record are public HTTP projections, not
+replacements for the SRS User, Profile or Skill classes implemented in #24.
+`teachingSkills`/`learningSkills` correspond to `Profile.teach`/`Profile.learn`;
+`userId` carries `User.uid` as a UUID string; skill `id`/`name`/`description` map to
+`Skill.skillID`/`skillName`/`description`. Existing API field names remain stable,
+with nullable description added. SQL bigint IDs remain long without truncation.
+
+The public `availableDays` field is only a weekday hint. It is not the diagram's
+full `Profile.available` interval list. Both recurring and dated unavailable
+slots remain private and belong to scheduling. Unblock history is also private;
+only a currently present blocked_users row excludes a candidate.
+
+The send action uses #8's `MatchOperations.sendRequest` via the existing HTTP
+endpoint. Accepted pairs are hidden in both directions with the same latest
+status spelling as #8. See [the shared model contract](class-diagram-integration.md)
+for exact domain-adapter dependencies and limits.
+
+For real PostgreSQL regression checks, use the disposable loopback database and
+environment variables documented in the shared contract, then run
+`bash mvnw -Dtest=PostgresMatchContractTests,PostgresDiscoveryContractTests test`.
+The tests share one schema initialization and use an empty test database. They
+cover accepted-row filtering, UUIDs, both skill directions, nullable descriptions,
+weekday queries and skill IDs beyond the Java int range. Default tests remain
+isolated H2 tests; live Supabase authorization is a separate integration check.

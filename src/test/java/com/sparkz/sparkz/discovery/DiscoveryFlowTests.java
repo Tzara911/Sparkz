@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DiscoveryFlowTests {
     static final UUID A = id(1), B = id(2), C = id(3), D = id(4), E = id(5);
     @Autowired DiscoveryService discovery;
-    @Autowired MatchService matches;
+    @Autowired MatchOperations matches;
     @Autowired JdbcClient db;
     @Autowired MockMvc mvc;
 
@@ -105,7 +105,7 @@ class DiscoveryFlowTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"pending", "accept"})
+    @ValueSource(strings = {"pending", "accepted"})
     void excludesExistingActivePairsInEitherDirectionAndAcrossSkills(String status) {
         db.sql("insert into match_requests(sender_id, receiver_id, skill_id, status) values (:a, :b, 1, :status), (:d, :a, 2, :status)")
             .param("a", A).param("b", B).param("d", D).param("status", status).update();
@@ -122,14 +122,18 @@ class DiscoveryFlowTests {
         var request = matches.list(D, true).get(0);
         assertThat(ids(recommended())).doesNotContain(D);
         assertThat(ids(discovery.discover(D, true, null, null, null, 0, 12))).doesNotContain(A);
-        matches.change(A, request.id(), MatchStatus.Canceled);
+        matches.cancelRequest(A, request.id());
         assertThat(ids(recommended())).contains(D);
-        request = matches.send(A, D, 1);
-        matches.change(D, request.id(), MatchStatus.Declined);
+        request = matches.sendRequest(A, D, 1);
+        matches.declineRequest(D, request.id());
         assertThat(ids(recommended())).contains(D);
-        request = matches.send(D, A, 2);
-        matches.change(A, request.id(), MatchStatus.Accepted);
+        request = matches.sendRequest(D, A, 2);
+        matches.acceptRequest(A, request.id());
+        assertThat(db.sql("select status from match_requests where request_id = :id")
+            .param("id", request.id()).query(String.class).single()).isEqualTo("accepted");
         assertThat(ids(recommended())).doesNotContain(D);
+        assertThat(ids(discovery.discover(D, true, null, null, null, 0, 12))).doesNotContain(A);
+        assertThat(matches.list(A, true).get(0).status()).isEqualTo(MatchStatus.Accepted);
     }
 
     @Test void staleRecommendationCannotBypassSendEligibility() throws Exception {
@@ -142,6 +146,7 @@ class DiscoveryFlowTests {
     }
 
     @Test void responseContainsOnlyPublicProjectionAndCatalogUsesSharedIds() throws Exception {
+        db.sql("update skills set description = 'Java programming' where skill_id = 1").update();
         mvc.perform(get("/api/discovery").with(user(A.toString())))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.profiles[0].*", hasSize(11)))
@@ -155,8 +160,33 @@ class DiscoveryFlowTests {
             .andExpect(content().string(not(containsString("secret@example.test"))));
         mvc.perform(get("/api/discovery/skills").with(user(A.toString())))
             .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(1))
-            .andExpect(jsonPath("$[0].name").value("Java"));
+            .andExpect(jsonPath("$[0].name").value("Java"))
+            .andExpect(jsonPath("$[0].description").value("Java programming"));
+        var java = recommended().profiles().get(0).learningSkills().get(0);
+        assertThat(java.description()).isEqualTo("Java programming");
         // The fixture has no private slots table: discovery must work without reading it.
+    }
+
+    @Test void bothSkillRolesRemainIndependentAndAssociationRemovalPreservesSharedCatalog() {
+        skill(B, 1, "teach");
+        var before = recommended().profiles().stream().filter(p -> p.userId().equals(B)).findFirst().orElseThrow();
+        assertThat(before.teachingSkills()).extracting(DiscoveryProfile.Skill::id).contains(1L);
+        assertThat(before.learningSkills()).extracting(DiscoveryProfile.Skill::id).contains(1L);
+        db.sql("delete from user_skills where user_id = :b and skill_id = 1 and skill_type = 'teach'")
+            .param("b", B).update();
+        var after = recommended().profiles().stream().filter(p -> p.userId().equals(B)).findFirst().orElseThrow();
+        assertThat(after.teachingSkills()).extracting(DiscoveryProfile.Skill::id).doesNotContain(1L);
+        assertThat(after.learningSkills()).extracting(DiscoveryProfile.Skill::id).contains(1L);
+        assertThat(discovery.catalog(A)).extracting(DiscoveryProfile.Skill::id).contains(1L);
+        assertThat(matches.sendRequest(A, B, 1).status()).isEqualTo(MatchStatus.Pending);
+    }
+
+    @Test void deletingCurrentBlockRestoresDiscoveryWithoutNeedingUnblockHistory() {
+        db.sql("insert into blocked_users(blocker_id, blocked_id) values (:b, :a)").param("a", A).param("b", B).update();
+        assertThat(ids(recommended())).doesNotContain(B);
+        db.sql("delete from blocked_users where blocker_id = :b and blocked_id = :a").param("a", A).param("b", B).update();
+        assertThat(ids(recommended())).contains(B);
+        // Historical events belong to User.unblock; they must not suppress current eligibility.
     }
 
     @ParameterizedTest

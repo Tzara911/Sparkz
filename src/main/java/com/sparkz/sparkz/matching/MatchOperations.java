@@ -7,18 +7,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Implements the SRS MatchOperations responsibilities using verified user UUIDs.
+ * Request/skill IDs disambiguate the diagram's user-based operations; returned
+ * records are HTTP results, not replacements for the shared User/Profile model.
+ */
 @Service
-public class MatchService {
+public class MatchOperations {
     private final MatchStore store;
     private final MatchEligibility eligibility;
 
-    public MatchService(MatchStore store, MatchEligibility eligibility) {
+    public MatchOperations(MatchStore store, MatchEligibility eligibility) {
         this.store = store;
         this.eligibility = eligibility;
     }
 
     @Transactional
-    public MatchRequest send(UUID sender, UUID recipient, long skill) {
+    public MatchRequest sendRequest(UUID sender, UUID recipient, long skill) {
         if (sender.equals(recipient)) throw error(HttpStatus.BAD_REQUEST, "Cannot match with yourself");
         eligible(sender, recipient, skill);
         if (store.hasActive(sender, recipient))
@@ -31,7 +36,21 @@ public class MatchService {
     public List<MatchRequest> list(UUID user, boolean incoming) { return store.list(user, incoming); }
 
     @Transactional
-    public MatchRequest change(UUID actor, long id, MatchStatus next) {
+    public MatchRequest acceptRequest(UUID user, long requestId) {
+        return change(user, requestId, MatchStatus.Accepted);
+    }
+
+    @Transactional
+    public MatchRequest declineRequest(UUID user, long requestId) {
+        return change(user, requestId, MatchStatus.Declined);
+    }
+
+    @Transactional
+    public MatchRequest cancelRequest(UUID user, long requestId) {
+        return change(user, requestId, MatchStatus.Canceled);
+    }
+
+    private MatchRequest change(UUID actor, long id, MatchStatus next) {
         MatchRequest request = store.find(id).orElseThrow(() -> error(HttpStatus.NOT_FOUND, "Request not found"));
         boolean participant = actor.equals(request.senderId()) || actor.equals(request.receiverId());
         if (!participant) throw error(HttpStatus.NOT_FOUND, "Request not found");

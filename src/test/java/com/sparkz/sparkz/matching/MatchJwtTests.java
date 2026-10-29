@@ -56,7 +56,7 @@ class MatchJwtTests {
     }
     @AfterAll static void stop() { SERVER.stop(0); }
     @Autowired MockMvc mvc;
-    @MockitoBean MatchService service;
+    @MockitoBean MatchOperations service;
     @MockitoBean DiscoveryService discovery;
 
     @Test void discoveryUsesTheSameVerifiedJwtIdentity() throws Exception {

@@ -53,9 +53,9 @@ rechecks eligibility, but decline/cancel remain available after eligibility chan
 
 ## Supabase integration checklist
 
-The supplied Supabase column and constraint reports confirm the following contract.
-Names, types, defaults, identity IDs, role/status values, and the relevant primary
-and foreign keys have been checked against those reports:
+The latest supplied Supabase SQL export defines the following column and value
+contract. Earlier catalog reports provide additional constraint detail; this is
+not a claim that live permissions or connectivity have been tested:
 
 | Table | Columns read/written |
 | --- | --- |
@@ -65,24 +65,26 @@ and foreign keys have been checked against those reports:
 | match_requests | `request_id bigint` (identity), `sender_id uuid`, `receiver_id uuid`, `skill_id bigint`, `status text` (default `pending`), `created_at timestamptz` and `status_updated_at timestamptz` (default `now()`) |
 | blocked_users | `blocker_id uuid`, `blocked_id uuid` |
 
-The database's accepted status is literally `accept`, not `accepted`. Java maps
-between the database values and the existing API/UI labels without changing stored data:
+The latest supplied SQL stores the accepted state as `accepted`. Earlier reports
+used `accept`; the application now targets the latest contract. No migration is
+run by the application. Java maps these stored values to the existing API/UI labels:
 
 | API/UI label | Supabase value |
 | --- | --- |
 | `Pending` | `pending` |
-| `Accepted` | `accept` |
+| `Accepted` | `accepted` |
 | `Declined` | `declined` |
 | `Canceled` | `canceled` |
 
 `MatchStatus` owns this conversion and `MatchStore` owns the database SQL. Duplicate
-checks and the review-only partial index use `pending` and `accept`. Normal API
+checks and the review-only partial index use `pending` and `accepted`. Normal API
 responses continue to expose `Accepted`, so clients do not need a new status label.
 
 `db/local-schema.sql` is a reduced local test fixture, **not** a Supabase migration.
 It uses the supplied values/defaults and relevant checks/FKs. Unused profile fields
-and the cross-schema `auth.users` foreign key are omitted; demo identity columns
-allow explicit seed IDs. No SQL initialization runs under the normal application profile.
+and the cross-schema `auth.users` foreign key are omitted; the demo skill identity
+allows explicit seed IDs, while request IDs use GENERATED ALWAYS. No SQL
+initialization runs under the normal application profile.
 
 To export the missing DDL details, run `db/inspect-match-schema.sql` in Supabase
 SQL Editor. It only reads column definitions, constraints, indexes, and RLS policies;
@@ -138,9 +140,29 @@ Tests cover persistence, incoming/outgoing isolation, all status actions, author
 validation, both-direction duplicates/blocks, ineligible accounts/schools/skills,
 acceptance revalidation, and concurrent sends and terminal transitions. Schema
 regression tests also read rows inserted with the database defaults, map existing
-`accept` rows, verify the stored values of each terminal transition, and confirm that
+`accepted` rows, verify the stored values of each terminal transition, and confirm that
 same-role skills cannot match. JWT HTTP tests additionally use locally signed RSA and EC tokens and a local JWKS
 server to verify signature, issuer, audience, expiry, not-before, and UUID identity
 validation. These tests validate the application against a fixture aligned with the
 supplied schema reports. They do not prove live Supabase connectivity, RLS/grants,
 or PostgreSQL partial-index behavior.
+
+
+## SRS class diagram integration
+
+The matching business entry point is `matching.MatchOperations`, with
+`sendRequest`, `acceptRequest`, `declineRequest`, and `cancelRequest` operations.
+The controller calls these named operations; eligibility checks, profile-row locks
+and conditional status transitions remain inside their transactions.
+
+The diagram's `user` argument is represented here by a verified UUID. Sending
+also takes the recipient UUID and selected skill ID; the other actions take the
+request ID so historical requests between the same users cannot be confused.
+These application methods return a `MatchRequest` HTTP result rather than the
+conceptual diagram's void. Exact User-typed domain signatures still depend on
+#24's shared model; this is responsibility/operation alignment, not a claim that
+all Java signatures already reproduce the diagram literally.
+
+See [shared class/database contract](class-diagram-integration.md) for #24 mapping
+and integration boundaries. The HTTP paths, request bodies and capitalized status
+labels remain unchanged for the production frontend.
