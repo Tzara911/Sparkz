@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.gen.*;
 import com.nimbusds.jwt.*;
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
+import java.security.Principal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
@@ -15,6 +16,9 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.test.context.*;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = MatchController.class)
-@Import(MatchSecurity.class)
+@Import({MatchSecurity.class, MatchJwtTests.ProfileAndSkillProbe.class})
 @ActiveProfiles("jwt-check")
 class MatchJwtTests {
     private static final UUID USER = UUID.fromString("00000000-0000-0000-0000-000000000001");
@@ -93,6 +97,52 @@ class MatchJwtTests {
         forged.sign(new RSASSASigner(new RSAKeyGenerator(2048).generate()));
         reject(forged.serialize());
         verifyNoInteractions(service);
+    }
+
+    @Test void profileAndCatalogRoutesReceiveTheVerifiedIdentity() throws Exception {
+        for (String path : PROFILE_AND_SKILL_PATHS) {
+            for (boolean ec : List.of(false, true)) {
+                String bearer = "Bearer " + token(ec, b -> {});
+                mvc.perform(get(path).header("Authorization", bearer))
+                    .andExpect(status().isOk()).andExpect(content().string(USER.toString()));
+                // Bearer-authenticated writes do not require the local Basic/CSRF flow.
+                mvc.perform(put(path).header("Authorization", bearer))
+                    .andExpect(status().isOk()).andExpect(content().string(USER.toString()));
+            }
+        }
+    }
+
+    @Test void profileAndCatalogRoutesRejectMissingOrInvalidIdentity() throws Exception {
+        List<String> invalidTokens = List.of(
+            "forged-token",
+            token(false, b -> b.audience("anon")),
+            token(true, b -> b.subject("not-a-user-uuid")),
+            token(false, b -> b.expirationTime(Date.from(Instant.now().minusSeconds(300)))));
+        for (String path : PROFILE_AND_SKILL_PATHS) {
+            mvc.perform(get(path)).andExpect(status().isUnauthorized());
+            mvc.perform(put(path)).andExpect(status().isUnauthorized());
+            for (String invalid : invalidTokens) {
+                mvc.perform(get(path).header("Authorization", "Bearer " + invalid))
+                    .andExpect(status().isUnauthorized());
+                mvc.perform(put(path).header("Authorization", "Bearer " + invalid))
+                    .andExpect(status().isUnauthorized());
+            }
+        }
+    }
+
+    private static final List<String> PROFILE_AND_SKILL_PATHS = List.of(
+        "/api/users/me", "/api/profiles/me", "/api/profiles/me/skills",
+        "/api/skills", "/api/skills/1");
+
+    // Test-only endpoints verify the shared filter/Principal contract, not teammates' CRUD.
+    @RestController
+    @Profile("jwt-check")
+    static class ProfileAndSkillProbe {
+        @RequestMapping({"/api/users/me", "/api/profiles/me", "/api/profiles/me/skills",
+            "/api/skills", "/api/skills/1"})
+        String identity(Principal principal) {
+            return principal == null ? "missing identity" : principal.getName();
+        }
     }
 
     private JWTClaimsSet claims(Consumer<JWTClaimsSet.Builder> change) {

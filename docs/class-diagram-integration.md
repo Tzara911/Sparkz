@@ -66,9 +66,32 @@ LearningSession, Review and UserOperations are outside #7/#8's feature scope.
 Their completed implementations and #24's domain adapters are still necessary
 before claiming the whole project reproduces every graded UML signature.
 
-Authentication and ownership remain required at API boundaries. Future profile
-and catalog routes must join the shared security configuration when implemented;
-protecting match/discovery routes does not automatically secure #24's routes.
+Authentication and ownership remain required at API boundaries. The existing
+JWT chain also covers `/api/users/**`, `/api/profiles/**` and `/api/skills/**`,
+including each root path. It supplies the verified UUID through
+`Principal.getName()` to #24/#25 controllers. Missing issuer configuration denies
+access to these routes. Profile controllers must still enforce ownership.
+
+## Coordination with #24, #25 and login (#5)
+
+- #24's `/api/users/me` can reuse the existing JWT chain. #5 owns Google login,
+  token refresh and profile creation; it should coordinate this shared backend
+  verifier instead of registering an overlapping filter chain.
+- `db/local-schema.sql` now includes all columns in the supplied `profiles`
+  table, including the fields read by #24/#25. The local fixture still omits
+  Supabase Auth and tables outside matching/discovery; it is not a migration.
+- For a combined local demo, reuse one schema/data initialization path and the
+  existing `LocalMatchSecurity` demo identities, password and CSRF contract.
+  #25's separate `demoUsers` bean/security configuration still needs coordination
+  with its owner; this change does not remove or modify their configuration.
+  Demo users use `Demo University` and completed onboarding for #7/#8 eligibility.
+- #24 and #25 still define competing Skill components and `GET /api/skills`.
+  Their owners must select one implementation before combining those branches.
+  These changes do not choose or copy either catalog implementation.
+
+JWT tests use test-only endpoints to check the shared authentication and
+`Principal` contract. They do not establish that teammates' CRUD implementations
+or the combined #24/#25 application have passed integration tests.
 
 ## Verification
 
