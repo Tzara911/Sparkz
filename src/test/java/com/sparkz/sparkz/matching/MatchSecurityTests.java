@@ -27,6 +27,16 @@ class MatchSecurityTests {
         }
     }
 
+    @Test void missingIssuerAlsoDeniesProfileAndCatalogRoutes() throws Exception {
+        for (String path : java.util.List.of("/api/users/me", "/api/profiles/me",
+                "/api/profiles/me/skills", "/api/skills", "/api/skills/1")) {
+            mvc.perform(get(path)).andExpect(status().isForbidden());
+            mvc.perform(put(path)).andExpect(status().isForbidden());
+            mvc.perform(get(path).header("Authorization", "Bearer forged-token"))
+                .andExpect(status().isForbidden());
+        }
+    }
+
     @Test void missingIssuerDeniesAnonymousAndForgedBearerTokens() throws Exception {
         mvc.perform(get("/api/match-requests?direction=incoming"))
             .andExpect(status().isForbidden());

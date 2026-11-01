@@ -81,8 +81,8 @@ checks and the review-only partial index use `pending` and `accepted`. Normal AP
 responses continue to expose `Accepted`, so clients do not need a new status label.
 
 `db/local-schema.sql` is a reduced local test fixture, **not** a Supabase migration.
-It uses the supplied values/defaults and relevant checks/FKs. Unused profile fields
-and the cross-schema `auth.users` foreign key are omitted; the demo skill identity
+It includes the supplied profile columns and relevant values/defaults/checks for
+sharing with #24/#25. The cross-schema `auth.users` foreign key is omitted; the demo skill identity
 allows explicit seed IDs, while request IDs use GENERATED ALWAYS. No SQL
 initialization runs under the normal application profile.
 
@@ -105,7 +105,13 @@ UUID subject, and the `authenticated` audience using public signing keys from
 `<issuer>/.well-known/jwks.json`. An OIDC discovery document is not required.
 This requires Supabase asymmetric JWT signing keys and reachable JWKS. Legacy HS256 projects need an
 explicit trusted decoder integration with #5; do not merely decode tokens. Missing
-issuer configuration denies match API access; an empty school allowlist rejects sends.
+issuer configuration denies access to the configured API routes; an empty school allowlist rejects sends.
+
+The same JWT chain covers `/api/users/**`, `/api/profiles/**` and `/api/skills/**`,
+including root paths, so #24/#25 can receive the verified UUID as
+`Principal.getName()`. Their controllers retain responsibility for ownership.
+Google login/token refresh remain #5's scope. See the shared class/database
+contract for the remaining duplicate catalog and local-login coordination.
 
 Existing indexes, RLS policies, backend grants, and live connectivity have not yet
 been verified. Review `db/supabase-match-guards.sql` against existing indexes and

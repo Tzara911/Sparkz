@@ -15,10 +15,15 @@ import org.springframework.security.web.SecurityFilterChain;
 @Profile("!local & !test")
 public class MatchSecurity {
     @Bean
-    SecurityFilterChain matchSecurity(HttpSecurity http,
+    SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
             @Value("${sparkz.auth.issuer:}") String issuer,
             @Value("${sparkz.auth.audience:authenticated}") String audience) throws Exception {
-        http.securityMatcher("/api/match-requests", "/api/match-requests/**", "/api/discovery", "/api/discovery/**")
+        // Share the verified Supabase identity with profile/catalog APIs from #24/#25.
+        // Their controllers still enforce ownership; this chain supplies authentication.
+        http.securityMatcher("/api/match-requests", "/api/match-requests/**",
+                "/api/discovery", "/api/discovery/**",
+                "/api/users", "/api/users/**", "/api/profiles", "/api/profiles/**",
+                "/api/skills", "/api/skills/**")
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .csrf(csrf -> csrf.disable()); // Bearer tokens only; no cookie authentication.
         if (issuer.isBlank()) {
