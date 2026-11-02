@@ -73,3 +73,10 @@ The discovery and match-request pages are **temporary test versions** for backen
 integration testing. The team's production frontend will replace them and connect
 to the existing Java APIs when ready.
 See [discovery API, ranking, database contract, and integration notes](docs/discovery.md).
+
+## MVP acceptance tests (Issue #10)
+
+See [test suites and reproducible PR combinations](docs/mvp-testing.md) and
+[executed results and integration blockers](docs/mvp-test-report.md).
+The test runner uses disposable source snapshots and H2, including the real #24/#25
+implementations when selected; it does not modify their branches or Supabase.
