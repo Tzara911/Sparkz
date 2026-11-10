@@ -21,6 +21,7 @@ public class MatchSecurity {
         // Share the verified Supabase identity with profile/catalog APIs from #24/#25.
         // Their controllers still enforce ownership; this chain supplies authentication.
         http.securityMatcher("/api/match-requests", "/api/match-requests/**",
+                "/api/discovery", "/api/discovery/**",
                 "/api/users", "/api/users/**", "/api/profiles", "/api/profiles/**",
                 "/api/skills", "/api/skills/**")
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

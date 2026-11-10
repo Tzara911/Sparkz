@@ -21,17 +21,17 @@ public class MatchController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public MatchRequest send(Principal principal, @Valid @RequestBody Send body) {
-        return service.sendRequest(user(principal), body.receiverId(), body.skillId());
+        return service.sendRequest(CurrentUser.id(principal), body.receiverId(), body.skillId());
     }
 
     @GetMapping
     public List<MatchRequest> list(Principal principal, @RequestParam Direction direction) {
-        return service.list(user(principal), direction == Direction.incoming);
+        return service.list(CurrentUser.id(principal), direction == Direction.incoming);
     }
 
     @PatchMapping("/{id}")
     public MatchRequest change(Principal principal, @PathVariable @Positive long id, @Valid @RequestBody Change body) {
-        UUID actor = user(principal);
+        UUID actor = CurrentUser.id(principal);
         return switch (body.status()) {
             case Accepted -> service.acceptRequest(actor, id);
             case Declined -> service.declineRequest(actor, id);
@@ -40,9 +40,4 @@ public class MatchController {
         };
     }
 
-    private UUID user(Principal principal) {
-        if (principal == null || principal.getName() == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        try { return UUID.fromString(principal.getName()); }
-        catch (IllegalArgumentException e) { throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user identity"); }
-    }
 }

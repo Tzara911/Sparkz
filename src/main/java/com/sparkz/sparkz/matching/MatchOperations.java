@@ -2,7 +2,6 @@ package com.sparkz.sparkz.matching;
 
 import java.time.Instant;
 import java.util.*;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +15,11 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class MatchOperations {
     private final MatchStore store;
-    private final Set<String> schools;
+    private final MatchEligibility eligibility;
 
-    public MatchOperations(MatchStore store, @Value("${sparkz.matching.supported-schools:}") List<String> schools) {
+    public MatchOperations(MatchStore store, MatchEligibility eligibility) {
         this.store = store;
-        this.schools = new HashSet<>(schools);
+        this.eligibility = eligibility;
     }
 
     @Transactional
@@ -68,14 +67,7 @@ public class MatchOperations {
 
     private void eligible(UUID a, UUID b, long skill) {
         List<MatchStore.Profile> profiles = store.lockProfiles(a, b);
-        if (profiles.size() != 2) throw error(HttpStatus.NOT_FOUND, "Profile not found");
-        for (MatchStore.Profile profile : profiles) {
-            if (!"active".equals(profile.accountStatus()) || !profile.onboarded())
-                throw error(HttpStatus.UNPROCESSABLE_ENTITY, "Both accounts must be active and onboarded");
-        }
-        String school = profiles.get(0).school();
-        if (school == null || !schools.contains(school) || !school.equals(profiles.get(1).school()))
-            throw error(HttpStatus.UNPROCESSABLE_ENTITY, "Both users must attend the same supported school");
+        eligibility.requirePair(profiles);
         if (store.blocked(a, b)) throw error(HttpStatus.UNPROCESSABLE_ENTITY, "These users cannot match");
         if (!store.compatible(a, b, skill)) throw error(HttpStatus.UNPROCESSABLE_ENTITY, "No compatible teaching and learning skills");
     }

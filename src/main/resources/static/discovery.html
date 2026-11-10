@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Discover (Test version) · Sparkz</title>
+  <link rel="stylesheet" href="/matches.css">
+  <link rel="stylesheet" href="/discovery.css">
+  <script src="/sparkz-api.js" defer></script>
+  <script src="/discovery.js" defer></script>
+</head>
+<body>
+<header><a href="/discovery.html" class="brand">Sparkz<span>✳</span></a><a href="/matches.html">Match requests ↗</a></header>
+<main>
+  <p><strong>Test version.</strong> Temporary page for integration testing. The production frontend will replace this page and connect to the existing Java APIs.</p>
+  <p class="eyebrow">KNOWLEDGE GOES BOTH WAYS</p>
+  <h1>Find your learning partner.</h1>
+  <p>Discover people at your school. Share what you know, and learn something new.</p>
+  <section aria-labelledby="filter-title">
+    <h2 id="filter-title">Find your fit</h2>
+    <form id="filters">
+      <label>They can teach<select id="teaches" name="teaches"><option value="">Any skill</option></select></label>
+      <label>They want to learn<select id="learns" name="learns"><option value="">Any skill</option></select></label>
+      <label>Available day<select id="day" name="day"><option value="">Any day</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="7">Sunday</option></select></label>
+      <button type="submit">Apply filters</button><button type="reset">Reset</button>
+    </form>
+  </section>
+  <nav aria-label="Discovery view"><button id="recommended" aria-pressed="true">For you</button><button id="browse" aria-pressed="false">Browse all</button><button id="refresh">Refresh ↻</button></nav>
+  <p id="view-help">People with skills that complement yours. Mutual exchanges appear first.</p>
+  <p id="message" role="status" aria-live="polite"></p>
+  <div id="profiles" aria-label="Discovered profiles" aria-busy="true"></div>
+  <div class="pagination" aria-label="Results pages"><button id="previous" disabled>Previous</button><span id="page-label">Page 1</span><button id="next" disabled>Next</button></div>
+  <noscript>Enable JavaScript to load profiles and send match requests.</noscript>
+</main>
+<footer>Sparkz · A little knowledge goes a long way.</footer>
+</body>
+</html>

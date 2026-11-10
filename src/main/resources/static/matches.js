@@ -1,36 +1,12 @@
-/* Integration point for #5: define window.sparkzAuth.getAccessToken() before this
-   script executes. Return the current Supabase access token; never a user ID.
-   Local demo uses a server-authenticated Basic session and CSRF tokens instead. */
 (() => {
   let direction = 'incoming';
-  let session;
+  const api = window.sparkzApi;
   let revision = 0;
   const byId = id => document.getElementById(id);
   const message = (text, error = false) => {
     byId('message').textContent = text;
     byId('message').className = error ? 'error' : '';
   };
-  async function api(path, options = {}) {
-    const headers = { Accept: 'application/json', ...options.headers };
-    const token = await window.sparkzAuth?.getAccessToken();
-    if (token) headers.Authorization = `Bearer ${token}`;
-    else {
-      if (!session) {
-        const response = await fetch('/api/match-session');
-        if (!response.ok) throw new Error('Please sign in to manage match requests.');
-        session = await response.json();
-      }
-      if (options.method) headers[session.csrfHeader] = session.csrfToken;
-    }
-    if (options.body) headers['Content-Type'] = 'application/json';
-    const response = await fetch(path, { ...options, headers });
-    if (!response.ok) {
-      let problem = {};
-      try { problem = await response.json(); } catch (_) { /* May be an authentication response. */ }
-      throw new Error(problem.detail || `Request failed (${response.status}). Please refresh and try again.`);
-    }
-    return response.json();
-  }
   function element(tag, text, className) {
     const node = document.createElement(tag);
     node.textContent = text;

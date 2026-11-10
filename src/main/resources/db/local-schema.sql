@@ -49,3 +49,10 @@ create table blocked_users (
     primary key(blocker_id, blocked_id),
     check (blocker_id <> blocked_id)
 );
+
+-- Public weekday contract; no detailed availability table is read by discovery.
+create table profile_available_days (
+    user_id uuid not null references profiles(user_id) on delete cascade,
+    day_of_week smallint not null check (day_of_week between 1 and 7),
+    primary key(user_id, day_of_week)
+);
