@@ -60,6 +60,13 @@ The project includes a shared VS Code launch configuration for connecting Spring
 The `Run Sparkz` configuration loads the local `.env` file automatically. Each developer only needs to create `.env` once.
 
 Never commit or share `.env`. If the database password changes, update the local `.env` file.
+
+## Shared frontend layout (Issue #4)
+
+The root page (`/`) demonstrates the reusable responsive header, navigation, and footer. Frontend pages can opt into the shared shell by including `/sparkz-layout.css` and `/sparkz-layout.js`, adding `<div data-sparkz-header></div>` and `<div data-sparkz-footer></div>`, and setting `data-page` on `<body>` to the matching navigation key. The current navigation keys are `home`, `login`, `onboarding`, `profile`, `browse`, `availability`, and `matches`. Bootstrap 5.3.3 is loaded from jsDelivr by the demo and match request pages.
+
+The shared navigation prepares these page paths for follow-up work: `/login.html`, `/onboarding.html`, `/profile.html`, `/browse.html`, and `/availability.html`. The existing `/matches.html` page uses the shared shell and keeps its feature styles in `matches.css`.
+
 ## Match requests
 
 Issue #8 adds sending, incoming/outgoing requests, and accept/decline/cancel actions.
