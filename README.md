@@ -64,3 +64,8 @@ Never commit or share `.env`. If the database password changes, update the local
 
 Issue #8 adds sending, incoming/outgoing requests, and accept/decline/cancel actions.
 See [local demo, API contract, and Supabase integration notes](docs/match-requests.md).
+
+## Availability and discovery
+
+See [availability/discovery API contract and local testing](docs/availability-discovery.md)
+for issues #16 and #7, including the #17 frontend integration contract and #8 match-request links.

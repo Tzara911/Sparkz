@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Discover people · Sparkz</title><link rel="stylesheet" href="/matches.css"><link rel="stylesheet" href="/discovery.css"><script src="/discovery.js" defer></script></head>
+<body data-page="browse">
+<header><a class="brand" href="/browse.html">Sparkz</a><a href="/matches.html">Match requests →</a></header>
+<main>
+<p class="eyebrow">FIND YOUR NEXT LEARNING PARTNER</p><h1>Discover people</h1><p>Find students at your school. Trade what you know for something you want to learn.</p>
+<section aria-label="Filter people"><form id="filters">
+<label>Skill<select id="skill"><option value="">Any skill</option></select></label>
+<label>They want to<select id="skill-type"><option value="">Teach or learn</option><option value="teach">Teach</option><option value="learn">Learn</option></select></label>
+<label>Available day<select id="day"><option value="">Any day</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="7">Sunday</option></select></label>
+<label>Show<select id="recommended"><option value="false">Everyone eligible</option><option value="true">Skill matches only</option></select></label>
+<button type="submit">Find people</button></form></section>
+<p id="message" role="status" aria-live="polite"></p><div id="people" aria-live="polite" aria-busy="true"></div>
+<nav aria-label="Results pages"><button id="previous" disabled>Previous</button><span id="page-count"></span><button id="next" disabled>Next</button></nav>
+</main><footer>General days are public. Detailed availability stays private.</footer>
+</body></html>
