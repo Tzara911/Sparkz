@@ -69,3 +69,17 @@ See [local demo, API contract, and Supabase integration notes](docs/match-reques
 
 See [availability/discovery API contract and local testing](docs/availability-discovery.md)
 for issues #16 and #7, including the #17 frontend integration contract and #8 match-request links.
+
+## Deployed frontend entry
+
+The domain root `/` (and `/index.html`) redirects to `/browse.html`. This provides
+an entry point to the existing discovery screen until a dedicated landing page
+is integrated. HTML, CSS, JavaScript, fonts, and images live under
+`src/main/resources/static` and are bundled into the Spring Boot executable JAR;
+this frontend does not require a separate npm build or a separate static service.
+
+After deploying a merged commit to Render, opening the domain root should reach
+`/browse.html`. API data still requires the real login integration and configured
+Supabase issuer/supported school settings; displaying the frontend is separate
+from successful authenticated API calls. Use the normal production configuration
+on Render, not the isolated loopback-only `local` profile.

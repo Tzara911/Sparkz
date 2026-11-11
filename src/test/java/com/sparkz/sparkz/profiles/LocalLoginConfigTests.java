@@ -26,6 +26,13 @@ class LocalLoginConfigTests {
     MockMvc mockMvc;
 
     @Test
+    void localLandingPageIsPublicWithoutOpeningProfileData() throws Exception {
+        mockMvc.perform(get("/")).andExpect(status().isFound());
+        mockMvc.perform(get("/browse.html")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/profiles/me")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void unauthenticatedRequestIsRejected() throws Exception {
         mockMvc.perform(get("/api/profiles/me")).andExpect(status().isUnauthorized());
     }
