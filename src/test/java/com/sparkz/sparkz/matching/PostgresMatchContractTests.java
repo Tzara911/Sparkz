@@ -4,16 +4,25 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
+import java.time.LocalTime;
+import com.sparkz.sparkz.availability.AvailabilityService;
+import com.sparkz.sparkz.discovery.DiscoveryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /** Opt-in real PostgreSQL checks. Creates tables only in a disposable loopback test DB. */
 @EnabledIfEnvironmentVariable(named = "SPARKZ_POSTGRES_TEST_URL",
@@ -28,10 +37,14 @@ import static org.assertj.core.api.Assertions.*;
     "spring.jpa.hibernate.ddl-auto=none"
 })
 @ActiveProfiles("test")
+@AutoConfigureMockMvc
 class PostgresMatchContractTests {
     private static final UUID A = new UUID(0, 1), B = new UUID(0, 2);
     @Autowired MatchOperations operations;
     @Autowired JdbcClient db;
+    @Autowired AvailabilityService availability;
+    @Autowired DiscoveryService discovery;
+    @Autowired MockMvc mvc;
 
     @BeforeEach void reset() {
         db.sql("delete from match_requests").update();
@@ -86,6 +99,50 @@ class PostgresMatchContractTests {
         var pending = operations.sendRequest(A, B, 1);
         assertThat(race(() -> operations.acceptRequest(B, pending.id()), () -> operations.cancelRequest(A, pending.id())))
             .containsExactlyInAnyOrder(200, 409);
+    }
+
+    @Test @Transactional
+    void availabilityPreservesPostgresTimesOwnershipAndCompositeDays() {
+        availability.replaceDays(A, List.of(1, 3));
+        var first = availability.saveSlot(A, null, 1, LocalTime.of(9, 15), LocalTime.of(10, 45));
+        var retained = availability.saveSlot(A, null, 3, LocalTime.of(14, 0), LocalTime.of(15, 30));
+        assertThat(availability.own(A).slots()).containsExactly(first, retained);
+        assertThat(availability.own(B).slots()).isEmpty();
+        expect(404, () -> availability.saveSlot(B, first.slotId(), 1, LocalTime.NOON, LocalTime.of(13, 0)));
+        expect(404, () -> availability.deleteSlot(B, first.slotId()));
+        expect(400, () -> availability.saveSlot(A, null, 1, LocalTime.NOON, LocalTime.NOON));
+        var changed = availability.saveSlot(A, retained.slotId(), 3, LocalTime.of(16, 0), LocalTime.of(17, 0));
+        assertThat(availability.replaceDays(A, List.of(3)).slots()).containsExactly(changed);
+        availability.deleteSlot(A, changed.slotId());
+        assertThat(availability.own(A).slots()).isEmpty();
+    }
+
+    @Test @Transactional
+    void discoveryUsesPostgresRolesAndDaysWithoutExposingPrivateData() throws Exception {
+        long guitar = db.sql("insert into skills(skill_name) values ('Guitar') returning skill_id").query(Long.class).single();
+        db.sql("insert into user_skills values (:a, :skill, 'learn'), (:b, :skill, 'teach')")
+            .param("a", A).param("b", B).param("skill", guitar).update();
+        availability.replaceDays(A, List.of(1, 3));
+        availability.replaceDays(B, List.of(3, 5));
+        availability.saveSlot(B, null, 3, LocalTime.of(15, 0), LocalTime.of(16, 0));
+        db.sql("update profiles set email = 'private@example.com', phone = 'private-phone' where user_id = :b")
+            .param("b", B).update();
+        var results = discovery.browse(A, guitar, DiscoveryService.SkillType.teach, 3, true, 0, 20);
+        assertThat(results.total()).isEqualTo(1);
+        var person = results.profiles().get(0);
+        assertThat(person.userId()).isEqualTo(B);
+        assertThat(person.reciprocal()).isTrue();
+        assertThat(person.commonDays()).containsExactly(3);
+        String body = mvc.perform(get("/api/discovery/" + B).with(user(A.toString())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.availableDays[0]").value(3))
+            .andExpect(jsonPath("$.slots").doesNotExist())
+            .andExpect(jsonPath("$.email").doesNotExist())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain("private@example.com", "private-phone", "startTime", "endTime");
+        db.sql("insert into blocked_users(blocker_id, blocked_id) values (:b, :a)")
+            .param("a", A).param("b", B).update();
+        assertThat(discovery.browse(A, null, null, null, false, 0, 20).profiles()).isEmpty();
     }
 
     private List<Integer> race(Callable<MatchRequest> first, Callable<MatchRequest> second) throws Exception {

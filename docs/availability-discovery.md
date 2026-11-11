@@ -145,3 +145,41 @@ H2-only seed (this does not change the normal seed or test fixture):
 Use demo account ending `0001` to see Maya, Sam and Jordan. Avatars reflect profile
 initials, and all filters and Connect links use the running backend. The extra
 fictional accounts are discovery candidates only, not additional Basic logins.
+
+## Real PostgreSQL validation
+
+The opt-in `PostgresMatchContractTests` require a **disposable local database**.
+They create an `auth` stub schema, initialize application tables, delete fixture
+rows, and reset identity sequences. They must not run against the team's shared
+Supabase database. The URL gate accepts only
+`jdbc:postgresql://127.0.0.1:<port>/sparkz_test`.
+
+With Docker available, prepare a temporary PostgreSQL instance:
+
+```sh
+export SPARKZ_POSTGRES_TEST_URL=jdbc:postgresql://127.0.0.1:55432/sparkz_test
+export SPARKZ_POSTGRES_TEST_USERNAME=postgres
+export SPARKZ_POSTGRES_TEST_PASSWORD="$(openssl rand -hex 24)"
+POSTGRES_PASSWORD="$SPARKZ_POSTGRES_TEST_PASSWORD" docker run --rm -d \
+  --name sparkz-postgres-test -p 127.0.0.1:55432:5432 \
+  --tmpfs /var/lib/postgresql/data:rw \
+  -e POSTGRES_DB=sparkz_test -e POSTGRES_PASSWORD postgres:17-alpine
+```
+
+Check `docker exec sparkz-postgres-test pg_isready -h 127.0.0.1 -U postgres -d sparkz_test`
+until ready, then run `./mvnw test`. Afterwards, run
+`docker stop sparkz-postgres-test` and unset the three `SPARKZ_POSTGRES_TEST_*`
+variables. A fresh container/database is needed for each suite run because the
+schema initialization deliberately creates new tables. No database password is
+stored in the repository.
+
+The PostgreSQL suite verifies match defaults/status values, bigint IDs, foreign
+keys, opposite-direction sends and competing transitions, plus recurring time
+round-trips, private slot ownership, composite day/slot relationships, reciprocal
+discovery, public-data filtering and bidirectional block exclusion. These checks
+validate the real PostgreSQL engine using the supplied schema contract; they do
+not certify live Supabase login, deployed schema differences, grants, or RLS.
+
+Verified on PostgreSQL 17: the full Maven suite passed with 96 tests, zero
+failures/errors/skips, including all seven PostgreSQL contract checks. The
+disposable container was stopped and removed after verification.

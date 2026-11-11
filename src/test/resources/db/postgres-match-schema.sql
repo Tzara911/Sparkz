@@ -54,6 +54,15 @@ create table public.profile_available_days (
     day_of_week smallint not null check (day_of_week between 1 and 7),
     primary key (user_id, day_of_week)
 );
+create table public.profile_available_slots (
+    slot_id bigint generated always as identity primary key,
+    user_id uuid not null,
+    day_of_week smallint not null,
+    start_time time not null,
+    end_time time not null,
+    foreign key (user_id, day_of_week) references public.profile_available_days(user_id, day_of_week),
+    check (start_time < end_time)
+);
 insert into auth.users values
     ('00000000-0000-0000-0000-000000000001'),
     ('00000000-0000-0000-0000-000000000002');
