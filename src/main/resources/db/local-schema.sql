@@ -49,3 +49,19 @@ create table blocked_users (
     primary key(blocker_id, blocked_id),
     check (blocker_id <> blocked_id)
 );
+
+-- Availability uses the same user/day composite parent key as Supabase.
+create table profile_available_days (
+    user_id uuid not null references profiles(user_id),
+    day_of_week smallint not null check (day_of_week between 1 and 7),
+    primary key(user_id, day_of_week)
+);
+create table profile_available_slots (
+    slot_id bigint generated always as identity primary key,
+    user_id uuid not null,
+    day_of_week smallint not null,
+    start_time time not null,
+    end_time time not null,
+    foreign key(user_id, day_of_week) references profile_available_days(user_id, day_of_week),
+    check (start_time < end_time)
+);

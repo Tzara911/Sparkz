@@ -1,6 +1,7 @@
 package com.sparkz.sparkz.skills;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -22,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * ProfileControllerTests. @Transactional for the same reason as there: roll
  * back writes so tests don't permanently change the shared demo data.
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.sql.init.data-locations=classpath:db/profile-skill-data.sql")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
@@ -46,7 +47,7 @@ class UserSkillControllerTests {
     void addingASkillShowsUpInTheOwnersListButNotAnotherUsers() throws Exception {
         // Chess is skill id 4. Demo user 1 (the teacher) adds it as something they teach.
         mockMvc
-            .perform(put("/api/profiles/me/skills/4/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")))
+            .perform(put("/api/profiles/me/skills/4/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
             .andExpect(status().isNoContent());
 
         mockMvc
@@ -64,10 +65,10 @@ class UserSkillControllerTests {
     @Test
     void addingTheSameSkillTwiceIsHarmless() throws Exception {
         mockMvc
-            .perform(put("/api/profiles/me/skills/4/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")))
+            .perform(put("/api/profiles/me/skills/4/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
             .andExpect(status().isNoContent());
         mockMvc
-            .perform(put("/api/profiles/me/skills/4/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")))
+            .perform(put("/api/profiles/me/skills/4/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
             .andExpect(status().isNoContent());
 
         mockMvc
@@ -79,21 +80,21 @@ class UserSkillControllerTests {
     @Test
     void rejectsAnInvalidSkillType() throws Exception {
         mockMvc
-            .perform(put("/api/profiles/me/skills/4/mentor").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")))
+            .perform(put("/api/profiles/me/skills/4/mentor").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
             .andExpect(status().isBadRequest());
     }
 
     @Test
     void rejectsASkillIdThatDoesNotExist() throws Exception {
         mockMvc
-            .perform(put("/api/profiles/me/skills/999/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")))
+            .perform(put("/api/profiles/me/skills/999/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
             .andExpect(status().isNotFound());
     }
 
     @Test
     void removingASkillTakesItOffTheOwnersList() throws Exception {
         mockMvc
-            .perform(delete("/api/profiles/me/skills/1/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")))
+            .perform(delete("/api/profiles/me/skills/1/teach").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
             .andExpect(status().isNoContent());
 
         mockMvc
@@ -105,7 +106,7 @@ class UserSkillControllerTests {
     @Test
     void removingASkillThatIsNotThereIsStillSuccessful() throws Exception {
         mockMvc
-            .perform(delete("/api/profiles/me/skills/5/learn").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")))
+            .perform(delete("/api/profiles/me/skills/5/learn").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
             .andExpect(status().isNoContent());
     }
 }
