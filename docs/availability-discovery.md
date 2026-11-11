@@ -4,8 +4,8 @@
 
 Implemented locally: authenticated availability management, public profile browsing,
 filtered recommendations, and linking a compatible skill to the existing #8 match
-request page. The shared page layout and final branding remain with #4/PR #29;
-this browse page currently reuses the existing match page styles. #17's owner can
+request page. Discovery and match requests use the approved cream/orange/brown theme and shared
+header/footer. These assets can be reused when #4/PR #29 is integrated. #17's owner can
 use the API contract below without changing the availability data model.
 
 Real Supabase login (#5), deployment integration, and live RLS/access-control
@@ -112,3 +112,36 @@ Java route authorization does not replace RLS for clients accessing Supabase.
 Tests use independent H2 databases per Spring context. The older profile/skill
 tests have a dedicated fixture for their five-skill demo, while match/discovery
 use the existing match fixture. This avoids conflicting fixture expectations.
+
+
+## Approved visual direction
+
+Discovery implements the last approved concept: centered “Find your people.” and
+handwritten “Share your spark.”, a single description, no hero illustration, no
+“Learn a little. Share a little.” eyebrow, and no “A little give. A little grow.”
+section heading. The results count and profile cards are driven by the API.
+Desktop uses three columns, tablet two, and phone one. Skill matches are selected
+by default; users can still choose everyone eligible. Multiple compatible skills
+produce a skill selector rather than silently choosing a request on the user's
+behalf. The My profile control opens a read-only overview of the signed-in user;
+profile editing remains a separate feature.
+
+`sparkz-theme.css` contains the cream, orange, brown, border and surface tokens.
+`sparkz-shell.js` renders the shared navigation/footer. Body font DM Sans and
+handwritten font Yellowtail are self-hosted, with licenses in `static/fonts`.
+`static/images/sparkz-logo.png` is a transparent rendition extracted with image
+generation from the approved concept, not the team's original vector master.
+Replace that one file with the official asset when available; no layout rewrite
+is required. No uploaded screenshot is used as the page background.
+
+For a local demo with the three fictional profile cards, opt into the additional
+H2-only seed (this does not change the normal seed or test fixture):
+
+```sh
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local \
+  -Dspring-boot.run.arguments=--spring.sql.init.data-locations=classpath:db/local-data.sql,classpath:db/discovery-demo-data.sql
+```
+
+Use demo account ending `0001` to see Maya, Sam and Jordan. Avatars reflect profile
+initials, and all filters and Connect links use the running backend. The extra
+fictional accounts are discovery candidates only, not additional Basic logins.

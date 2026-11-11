@@ -22,29 +22,76 @@
   }
   function render(person) {
     const card = element('article', '', 'person');
-    if (person.reciprocal) card.append(element('span', 'You can teach each other', 'badge'));
-    card.append(element('h2', person.username || person.firstName || 'Sparkz member'));
-    card.append(element('p', person.schoolName));
-    if (person.bio) card.append(element('p', person.bio));
+    const name = person.username || person.firstName || 'Sparkz member';
+    const heading = element('div', '', 'person-heading');
+    const avatar = element('span', Array.from(name.trim())[0]?.toLocaleUpperCase() || '?', 'person-avatar');
+    avatar.setAttribute('aria-hidden', 'true');
+    const identity = element('div', '', 'person-identity');
+    identity.append(element('h2', name), element('p', person.schoolName, 'person-school'));
+    if (person.reciprocal) identity.append(element('span', 'A two-way spark ✦', 'badge'));
+    heading.append(avatar, identity);
+    card.append(heading);
+    card.append(element('p', person.bio || 'No introduction added yet.', 'person-bio'));
     for (const type of ['teach', 'learn']) {
-      const skills = person.skills.filter(s => s.skillType === type).map(s => s.skillName);
-      if (skills.length) card.append(element('h3', type === 'teach' ? 'Can teach' : 'Wants to learn'), element('p', skills.join(', ')));
+      const row = element('div', '', 'skill-row');
+      const tags = element('div', '', 'skill-tags');
+      const skills = person.skills.filter(s => s.skillType === type);
+      for (const skill of skills) tags.append(element('span', skill.skillName, 'skill-tag'));
+      if (!skills.length) tags.append(element('span', 'Not added yet', 'no-skills'));
+      row.append(element('h3', type === 'teach' ? 'Can teach:' : 'Wants to learn:'), tags);
+      card.append(row);
     }
-    card.append(element('h3', 'General availability'), element('p', person.availableDays.length ? person.availableDays.map(d => weekdays[d]).join(', ') : 'No days shared yet'));
-    if (person.reasons.length) {
-      const list = element('ul', '');
-      person.reasons.forEach(reason => list.append(element('li', reason)));
-      card.append(list);
+    const availability = element('div', '', 'availability-row');
+    const days = element('div', '', 'day-tags');
+    for (const day of person.availableDays) {
+      const shared = person.commonDays.includes(day);
+      const chip = element('span', weekdays[day].slice(0, 3), `day-tag${shared ? ' is-shared' : ''}`);
+      chip.title = shared ? `You are both available on ${weekdays[day]}` : weekdays[day];
+      chip.setAttribute('aria-label', chip.title);
+      days.append(chip);
     }
-    if (person.matchStatus) card.append(element('p', person.matchStatus === 'accepted' ? 'You are already matched.' : 'A match request is pending.'));
+    if (!person.availableDays.length) days.append(element('span', 'No days shared yet', 'no-skills'));
+    availability.append(element('h3', 'Available days:'), days);
+    card.append(availability);
+    const reason = person.reciprocal ? 'You can teach each other.' : person.reasons[0];
+    if (reason) {
+      const note = element('p', '', 'match-note');
+      const spark = element('span', '✦', 'spark');
+      spark.setAttribute('aria-hidden', 'true');
+      note.append(spark, element('span', reason));
+      card.append(note);
+    }
+    const actions = element('div', '', 'person-actions');
+    if (person.matchStatus) actions.append(element('p', person.matchStatus === 'accepted' ? 'You are already matched.' : 'A match request is pending.', 'match-state'));
     else {
       const compatible = new Map([...person.canLearn, ...person.canTeach].map(s => [s.skillId, s]));
-      for (const skill of compatible.values()) {
-        const link = element('a', `Connect over ${skill.skillName} →`);
-        link.href = `/matches.html?${new URLSearchParams({receiverId: person.userId, skillId: skill.skillId})}`;
-        card.append(link);
-      }
+      if (compatible.size) {
+        const link = element('a', `Connect with ${person.firstName || name}`, 'connect-link');
+        const arrow = element('span', '', 'link-arrow');
+        arrow.innerHTML = '<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 15 15 5M5 5h10v10"/></svg>';
+        arrow.setAttribute('aria-hidden', 'true');
+        link.append(arrow);
+        const setSkill = skill => {
+          link.href = `/matches.html?${new URLSearchParams({receiverId: person.userId, skillId: skill.skillId})}`;
+          link.setAttribute('aria-label', `Connect with ${person.firstName || name} over ${skill.skillName}`);
+        };
+        setSkill(compatible.values().next().value);
+        if (compatible.size > 1) {
+          const label = element('label', 'Connect over', 'skill-choice');
+          const select = element('select', '');
+          for (const skill of compatible.values()) {
+            const option = element('option', skill.skillName);
+            option.value = String(skill.skillId);
+            select.append(option);
+          }
+          select.addEventListener('change', () => setSkill([...compatible.values()].find(s => String(s.skillId) === select.value)));
+          label.append(select);
+          actions.append(label);
+        }
+        actions.append(link);
+      } else actions.append(element('p', 'No shared skill match yet.', 'match-state'));
     }
+    card.append(actions);
     return card;
   }
   async function load() {
@@ -60,7 +107,7 @@
       if (current !== revision) return;
       byId('people').replaceChildren(...data.profiles.map(render));
       if (!data.profiles.length) byId('people').append(element('p', 'No people found. Try another skill or available day.', 'empty'));
-      byId('message').textContent = `${data.total} ${data.total === 1 ? 'person' : 'people'} found`;
+      byId('message').textContent = `${data.total} ${data.total === 1 ? 'person' : 'people'} to meet`;
       byId('page-count').textContent = data.total ? `${offset + 1}–${offset + data.profiles.length} of ${data.total}` : '0 results';
       byId('previous').disabled = offset === 0;
       byId('next').disabled = offset + limit >= data.total;
