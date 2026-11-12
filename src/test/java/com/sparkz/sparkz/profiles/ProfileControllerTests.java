@@ -1,6 +1,7 @@
 package com.sparkz.sparkz.profiles;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -26,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
  * so without a rollback, the update test could permanently change the demo
  * data and break other tests depending on test execution order.
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.sql.init.data-locations=classpath:db/profile-skill-data.sql")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
@@ -77,7 +78,7 @@ class ProfileControllerTests {
         mockMvc
             .perform(
                 put("/api/profiles/me")
-                    .with(httpBasic(LocalLoginConfig.DEMO_USER_2, "local-demo"))
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_2, "local-demo")).with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(updatedProfileJson))
             .andExpect(status().isOk())
@@ -109,7 +110,7 @@ class ProfileControllerTests {
         mockMvc
             .perform(
                 put("/api/profiles/me")
-                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo"))
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(updatedProfileJson))
             .andExpect(status().isOk());
@@ -133,7 +134,7 @@ class ProfileControllerTests {
         mockMvc
             .perform(
                 put("/api/profiles/me")
-                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo"))
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(invalidProfileJson))
             .andExpect(status().isBadRequest());

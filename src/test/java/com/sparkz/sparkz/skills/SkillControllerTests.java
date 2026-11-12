@@ -14,7 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Confirms GET /api/skills returns the full skills catalog seeded in data.sql. */
-@SpringBootTest
+@SpringBootTest(properties = "spring.sql.init.data-locations=classpath:db/profile-skill-data.sql")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SkillControllerTests {

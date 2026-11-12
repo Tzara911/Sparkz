@@ -1,10 +1,21 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Match requests · Sparkz</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Yellowtail&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"><link rel="stylesheet" href="/sparkz-layout.css"><link rel="stylesheet" href="/matches.css"><script src="/sparkz-layout.js" defer></script><script src="/matches.js" defer></script></head>
-<body class="sparkz-page" data-page="matches"><div data-sparkz-header></div>
-<main><p class="eyebrow">YOUR NEXT CONNECTION</p><h1>Match requests</h1><p>Exchange skills. Start a conversation. Find your next learning partner.</p>
-<section aria-labelledby="connect-title"><h2 id="connect-title">Make a connection</h2>
-<form id="send-form"><label>Partner ID<input id="receiver" name="receiver" required placeholder="User ID from their profile"></label><label>Skill ID<input id="skill" name="skill" type="number" min="1" step="1" required></label><button type="submit">Send request ↗</button></form></section>
-<p id="message" role="status" aria-live="polite"></p>
-<nav aria-label="Request direction"><button id="incoming" aria-pressed="true">Incoming</button><button id="outgoing" aria-pressed="false">Outgoing</button><button id="refresh">Refresh ↻</button></nav>
-<div id="requests" aria-live="polite"></div>
-</main><div data-sparkz-footer></div></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff9e9"><title>Match requests · Sparkz</title>
+  <link rel="stylesheet" href="/sparkz-theme.css"><link rel="stylesheet" href="/matches.css">
+  <script src="/sparkz-shell.js" defer></script><script src="/matches.js" defer></script>
+</head>
+<body data-page="matches">
+<a class="skip-link" href="#main">Skip to content</a><div data-sparkz-header></div>
+<main id="main" class="requests-page">
+  <h1>Match requests</h1><p>Exchange skills. Start a conversation. Find your next learning partner.</p>
+  <section aria-labelledby="connect-title"><h2 id="connect-title">Make a connection</h2>
+    <form id="send-form"><label>Partner ID<input id="receiver" name="receiver" required placeholder="User ID from their profile"></label><label>Skill ID<input id="skill" name="skill" type="number" min="1" step="1" required></label><button type="submit">Send request <span aria-hidden="true">→</span></button></form>
+  </section>
+  <p id="message" role="status" aria-live="polite"></p>
+  <nav class="request-tabs" aria-label="Request direction"><button id="incoming" aria-pressed="true">Incoming</button><button id="outgoing" aria-pressed="false">Outgoing</button><button id="refresh">Refresh</button></nav>
+  <div id="requests" aria-live="polite"></div>
+</main><div data-sparkz-footer></div>
+</body>
+</html>

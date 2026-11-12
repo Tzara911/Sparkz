@@ -9,7 +9,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 
-@Repository
+@Repository("jdbcSkillRepository")
 public class SkillRepository {
 
     private final JdbcClient jdbcClient;

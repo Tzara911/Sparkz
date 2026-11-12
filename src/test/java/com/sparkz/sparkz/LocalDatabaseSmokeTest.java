@@ -13,7 +13,7 @@ import org.springframework.test.context.ActiveProfiles;
  * tables and data.sql seeds them. This is infrastructure-only - no profile/skills
  * business logic is tested here, just that the database is usable.
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.sql.init.data-locations=classpath:db/profile-skill-data.sql")
 @ActiveProfiles("test")
 class LocalDatabaseSmokeTest {
 

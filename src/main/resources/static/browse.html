@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff9e9">
+  <title>Discover people · Sparkz</title>
+  <link rel="preload" href="/fonts/dm-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/yellowtail-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/sparkz-theme.css">
+  <link rel="stylesheet" href="/discovery.css">
+  <script src="/sparkz-shell.js" defer></script>
+  <script src="/discovery.js" defer></script>
+</head>
+<body data-page="browse">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div data-sparkz-header></div>
+  <main id="main">
+    <section class="discovery-hero" aria-labelledby="discovery-title">
+      <h1 id="discovery-title">Find your people.
+        <span>Share your spark.</span></h1>
+      <p>Trade what you know for something you’d love to learn.</p>
+    </section>
+    <section class="filter-panel" aria-label="Filter people">
+      <form id="filters">
+        <label>Skill<select id="skill"><option value="">Any skill</option></select></label>
+        <label>They want to<select id="skill-type"><option value="">Teach or learn</option><option value="teach">Teach</option><option value="learn">Learn</option></select></label>
+        <label>Available day<select id="day"><option value="">Any day</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="7">Sunday</option></select></label>
+        <label>Show<select id="recommended"><option value="true">Skill matches</option><option value="false">Everyone eligible</option></select></label>
+        <div class="filter-action"><button type="submit">Find people <span aria-hidden="true">→</span></button></div>
+      </form>
+    </section>
+    <p id="message" role="status" aria-live="polite"></p>
+    <div id="people" aria-live="polite" aria-busy="true"></div>
+    <nav class="pagination" aria-label="Results pages">
+      <button id="previous" disabled>Previous</button><span id="page-count"></span><button id="next" disabled>Next</button>
+    </nav>
+    <noscript><p>Enable JavaScript to browse people and filter skill matches.</p></noscript>
+  </main>
+  <div data-sparkz-footer></div>
+</body>
+</html>

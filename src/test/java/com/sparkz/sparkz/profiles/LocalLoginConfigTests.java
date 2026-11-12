@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * returns once authenticated is ProfileControllerTests' job, not this
  * class's - this class only cares about authentication itself.
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.sql.init.data-locations=classpath:db/profile-skill-data.sql")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class LocalLoginConfigTests {
