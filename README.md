@@ -63,9 +63,9 @@ Never commit or share `.env`. If the database password changes, update the local
 
 ## Shared frontend layout (Issue #4)
 
-The root page (`/`) demonstrates the reusable responsive header, navigation, and footer. Frontend pages can opt into the shared shell by including `/sparkz-layout.css` and `/sparkz-layout.js`, adding `<div data-sparkz-header></div>` and `<div data-sparkz-footer></div>`, and setting `data-page` on `<body>` to the matching navigation key. The current navigation keys are `home`, `login`, `onboarding`, `profile`, `browse`, `availability`, and `matches`. Bootstrap 5.3.3 is loaded from jsDelivr by the demo and match request pages.
+The root page (`/`) and `/index.html` redirect to the working discovery page at `/browse.html`. Discovery and match requests share the cream/orange theme, responsive navigation, profile dialog, and footer. At widths up to 900px, the menu button expands navigation; Escape collapses it and returns focus to the button.
 
-The shared navigation prepares these page paths for follow-up work: `/login.html`, `/onboarding.html`, `/profile.html`, `/browse.html`, and `/availability.html`. The existing `/matches.html` page uses the shared shell and keeps its feature styles in `matches.css`.
+Frontend pages use `/sparkz-theme.css` and `/sparkz-shell.js`, with `<div data-sparkz-header></div>` and `<div data-sparkz-footer></div>`, and set `data-page="browse"` or `data-page="matches"` on `<body>`. Feature styles stay in `discovery.css` and `matches.css`. Fonts and the logo are served locally. My profile opens the existing profile dialog; links to unimplemented login, onboarding, and availability pages are omitted until those pages are available. Production sign-in still depends on the auth integration described in the feature documentation.
 
 ## Match requests
 

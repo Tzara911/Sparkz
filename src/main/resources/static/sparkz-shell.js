@@ -4,13 +4,28 @@
   document.querySelector('[data-sparkz-header]').innerHTML = `
     <header class="site-header"><div class="header-inner">
       <a class="brand" href="/browse.html" aria-label="Sparkz home"><img src="/images/sparkz-logo.png" alt="Sparkz" width="216" height="75"></a>
-      <nav class="primary-nav" aria-label="Main navigation">
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-navigation"><span aria-hidden="true">☰</span></button>
+      <nav class="primary-nav" id="primary-navigation" aria-label="Main navigation">
         <a href="/browse.html" ${page === 'browse' ? 'aria-current="page"' : ''}>Discover</a>
         <a href="/matches.html" ${page === 'matches' ? 'aria-current="page"' : ''}>Match requests</a>
         <button class="profile-nav" type="button" data-open-profile>My profile</button>
       </nav>
       <button class="user-avatar" type="button" data-open-profile aria-label="Open my profile">?</button>
     </div></header>`;
+  const menuToggle = document.querySelector('.menu-toggle');
+  const navigation = document.querySelector('.primary-nav');
+  const setMenuOpen = open => {
+    menuToggle.setAttribute('aria-expanded', String(open));
+    navigation.classList.toggle('is-open', open);
+  };
+  menuToggle.addEventListener('click', () => setMenuOpen(menuToggle.getAttribute('aria-expanded') !== 'true'));
+  document.querySelector('.site-header').addEventListener('keydown', event => {
+    if (event.key === 'Escape' && menuToggle.getAttribute('aria-expanded') === 'true') {
+      setMenuOpen(false);
+      menuToggle.focus();
+    }
+  });
+  window.matchMedia('(max-width: 900px)').addEventListener('change', () => setMenuOpen(false));
   document.querySelector('[data-sparkz-footer]').innerHTML = `
     <footer class="site-footer"><div class="footer-inner">
       <img class="footer-logo" src="/images/sparkz-logo.png" alt="" width="146" height="54">
