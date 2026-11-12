@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff9e9">
+  <title>My availability · Sparkz</title>
+  <link rel="stylesheet" href="/sparkz-theme.css">
+  <link rel="stylesheet" href="/availability.css">
+  <script src="/sparkz-shell.js" defer></script>
+  <script src="/availability.js" defer></script>
+</head>
+<body data-page="availability">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div data-sparkz-header></div>
+  <main id="main" class="availability-page">
+    <section class="availability-hero">
+      <p class="script-kicker">make a little room for connection</p>
+      <h1>When are <span>you free?</span></h1>
+      <p>Choose the days that usually work for you, then add the times you are available to meet.</p>
+    </section>
+    <section class="availability-panel" aria-labelledby="days-title">
+      <div class="section-heading"><div><p class="eyebrow">the weekly rhythm</p><h2 id="days-title">Your available days</h2></div><span class="section-stamp" aria-hidden="true">✳</span></div>
+      <p class="section-help">Select every day you are generally available. These days can appear on your public profile.</p>
+      <form id="days-form">
+        <fieldset class="day-picker"><legend class="visually-hidden">Choose available days</legend>
+          <label class="day-choice"><input type="checkbox" value="1"><span>Mon</span></label>
+          <label class="day-choice"><input type="checkbox" value="2"><span>Tue</span></label>
+          <label class="day-choice"><input type="checkbox" value="3"><span>Wed</span></label>
+          <label class="day-choice"><input type="checkbox" value="4"><span>Thu</span></label>
+          <label class="day-choice"><input type="checkbox" value="5"><span>Fri</span></label>
+          <label class="day-choice"><input type="checkbox" value="6"><span>Sat</span></label>
+          <label class="day-choice"><input type="checkbox" value="7"><span>Sun</span></label>
+        </fieldset>
+        <div class="form-footer"><span class="privacy-note">✦ Your detailed time slots stay private.</span><button type="submit">Save my days <span aria-hidden="true">→</span></button></div>
+      </form>
+      <p id="days-message" class="status-message" role="status" aria-live="polite"></p>
+    </section>
+    <section class="availability-panel slots-panel" aria-labelledby="slots-title">
+      <div class="section-heading"><div><p class="eyebrow">the finer details</p><h2 id="slots-title">Manage time slots</h2></div><span class="private-stamp">PRIVATE</span></div>
+      <p class="section-help">Add the time windows that work for you. Only you can see and manage these details.</p>
+      <form id="slot-form" class="slot-form">
+        <input id="slot-id" type="hidden">
+        <label>Day<select id="slot-day" required><option value="">Choose a day</option></select></label>
+        <label>From<input id="slot-start" type="time" required></label>
+        <label>Until<input id="slot-end" type="time" required></label>
+        <div class="slot-form-actions"><button id="slot-save" type="submit">Add time slot <span aria-hidden="true">+</span></button><button id="slot-cancel" type="button" class="secondary-button" hidden>Cancel edit</button></div>
+      </form>
+      <p id="slot-message" class="status-message" role="status" aria-live="polite"></p>
+      <div class="slot-list-heading"><h3>Your time slots</h3><span id="slot-count">0 saved</span></div>
+      <div id="slot-list" class="slot-list" aria-live="polite"><p class="empty-state">Loading your availability…</p></div>
+    </section>
+    <p class="demo-hint" id="demo-hint" hidden>Demo mode · Changes are saved in this browser only.</p>
+  </main>
+  <div data-sparkz-footer></div>
+</body>
+</html>

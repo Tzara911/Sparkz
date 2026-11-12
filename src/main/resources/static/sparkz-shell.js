@@ -7,6 +7,7 @@
       <nav class="primary-nav" aria-label="Main navigation">
         <a href="/browse.html" ${page === 'browse' ? 'aria-current="page"' : ''}>Discover</a>
         <a href="/matches.html" ${page === 'matches' ? 'aria-current="page"' : ''}>Match requests</a>
+        <a href="/availability.html" ${page === 'availability' ? 'aria-current="page"' : ''}>Availability</a>
         <button class="profile-nav" type="button" data-open-profile>My profile</button>
       </nav>
       <button class="user-avatar" type="button" data-open-profile aria-label="Open my profile">?</button>
@@ -49,6 +50,18 @@
         p.className = className;
         content.append(p);
       }
+      try {
+        const token = await window.sparkzAuth?.getAccessToken();
+        const response = await fetch('/api/profiles/me/availability', {headers: {Accept: 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {})}});
+        if (response.ok) {
+          const availability = await response.json();
+          const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+          const days = document.createElement('p');
+          days.textContent = availability.days.length ? `Generally available: ${availability.days.map(day => dayNames[day]).join(', ')}` : 'No general available days added yet.';
+          content.append(days);
+        }
+      } catch (_) { /* Keep the profile overview useful if availability is not configured. */ }
+
     } catch (error) { content.textContent = error.message; }
   });
   loadProfile().catch(() => { /* The feature page shows the sign-in error. */ });
