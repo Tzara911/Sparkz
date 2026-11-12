@@ -63,9 +63,9 @@ Never commit or share `.env`. If the database password changes, update the local
 
 ## Shared frontend layout (Issue #4)
 
-The root page (`/`) demonstrates the reusable responsive header, navigation, and footer. Frontend pages can opt into the shared shell by including `/sparkz-layout.css` and `/sparkz-layout.js`, adding `<div data-sparkz-header></div>` and `<div data-sparkz-footer></div>`, and setting `data-page` on `<body>` to the matching navigation key. The current navigation keys are `home`, `login`, `onboarding`, `profile`, `browse`, `availability`, and `matches`. Bootstrap 5.3.3 is loaded from jsDelivr by the demo and match request pages.
+The root page (`/`) is the landing page: it retains Issue #4's hero banner, Explore skills link, and three introduction cards. It uses the same cream/orange/brown colors, DM Sans and Yellowtail fonts, and logo as discovery, while `/browse.html` remains the separate, functional discovery page. The landing page includes Bootstrap 5.3.3 from jsDelivr, `/sparkz-theme.css` for shared brand values and local fonts, and `/sparkz-layout.css` and `/sparkz-layout.js` for its header, footer, and landing layout.
 
-The shared navigation prepares these page paths for follow-up work: `/login.html`, `/onboarding.html`, `/profile.html`, `/browse.html`, and `/availability.html`. The existing `/matches.html` page uses the shared shell and keeps its feature styles in `matches.css`.
+Home, Browse, Match requests, and Explore skills lead to implemented pages. Login, Onboarding, Profile, and Manage Availability keep their places in the landing navigation as disabled labels until their standalone pages are available. Discovery and match requests retain their existing `/sparkz-shell.js` navigation and profile dialog; their feature files are unchanged by this landing page update.
 
 ## Match requests
 
