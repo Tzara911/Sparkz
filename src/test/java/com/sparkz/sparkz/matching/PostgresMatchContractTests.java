@@ -7,6 +7,8 @@ import java.util.stream.Stream;
 import java.time.LocalTime;
 import com.sparkz.sparkz.availability.AvailabilityService;
 import com.sparkz.sparkz.discovery.DiscoveryService;
+import com.sparkz.sparkz.skills.UserSkillService;
+import com.sparkz.sparkz.skills.AddSkillResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -21,7 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /** Opt-in real PostgreSQL checks. Creates tables only in a disposable loopback test DB. */
@@ -45,6 +51,7 @@ class PostgresMatchContractTests {
     @Autowired AvailabilityService availability;
     @Autowired DiscoveryService discovery;
     @Autowired MockMvc mvc;
+    @Autowired UserSkillService userSkills;
 
     @BeforeEach void reset() {
         db.sql("delete from match_requests").update();
@@ -143,6 +150,65 @@ class PostgresMatchContractTests {
         db.sql("insert into blocked_users(blocker_id, blocked_id) values (:b, :a)")
             .param("a", A).param("b", B).update();
         assertThat(discovery.browse(A, null, null, null, false, 0, 20).profiles()).isEmpty();
+    }
+
+    @Test void skillSaveReadsBackAndRemainsIdempotentOnPostgres() throws Exception {
+        String path = "/api/profiles/me/skills/1/learn";
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mvc.perform(put(path).with(httpBasic(A.toString(), "local-demo")).with(csrf()))
+                .andExpect(status().isNoContent());
+        }
+        mvc.perform(get("/api/profiles/me/skills").with(httpBasic(A.toString(), "local-demo")))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[?(@.skillId == 1 && @.skillType == 'learn')]").exists())
+            .andExpect(jsonPath("$[?(@.skillId == 1 && @.skillType == 'teach')]").exists());
+        assertThat(db.sql("select count(*) from user_skills where user_id = :a and skill_id = 1 and skill_type = 'learn'")
+            .param("a", A).query(Integer.class).single()).isEqualTo(1);
+    }
+
+    @Test void skillReadsAndRemovalRemainScopedToTheAuthenticatedUser() throws Exception {
+        long guitar = db.sql("insert into skills(skill_name) values ('Guitar') returning skill_id").query(Long.class).single();
+        String path = "/api/profiles/me/skills/" + guitar + "/learn";
+        mvc.perform(put(path).with(httpBasic(A.toString(), "local-demo")).with(csrf()))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/profiles/me/skills").with(httpBasic(B.toString(), "local-demo")))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[?(@.skillId == " + guitar + ")]").isEmpty());
+        mvc.perform(delete(path).with(httpBasic(B.toString(), "local-demo")).with(csrf()))
+            .andExpect(status().isNoContent());
+        mvc.perform(get("/api/profiles/me/skills").with(httpBasic(A.toString(), "local-demo")))
+            .andExpect(jsonPath("$[?(@.skillId == " + guitar + " && @.skillType == 'learn')]").exists());
+        mvc.perform(delete(path).with(httpBasic(A.toString(), "local-demo")).with(csrf()))
+            .andExpect(status().isNoContent());
+        assertThat(userSkills.getOwnSkills(A)).extracting(s -> s.getSkillId()).doesNotContain(guitar);
+        assertThat(userSkills.getOwnSkills(B)).hasSize(1);
+    }
+
+    @Test void invalidAndUnauthenticatedSkillWritesLeavePostgresUnchanged() throws Exception {
+        mvc.perform(put("/api/profiles/me/skills/1/mentor").with(httpBasic(A.toString(), "local-demo")).with(csrf()))
+            .andExpect(status().isBadRequest());
+        mvc.perform(put("/api/profiles/me/skills/9223372036854775807/teach").with(httpBasic(A.toString(), "local-demo")).with(csrf()))
+            .andExpect(status().isNotFound());
+        mvc.perform(put("/api/profiles/me/skills/1/learn").with(csrf()))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(put("/api/profiles/me/skills/1/learn").with(httpBasic(A.toString(), "local-demo")))
+            .andExpect(status().isForbidden());
+        assertThat(db.sql("select count(*) from user_skills").query(Integer.class).single()).isEqualTo(2);
+    }
+
+    @Test void concurrentSkillAddsKeepOneAssociationOnPostgres() throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+        CountDownLatch start = new CountDownLatch(1);
+        try {
+            var futures = java.util.stream.IntStream.range(0, 4).mapToObj(i -> executor.submit(() -> {
+                if (!start.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("Start timed out");
+                return userSkills.addOwnSkill(A, 1L, "learn");
+            })).toList();
+            start.countDown();
+            for (var future : futures) assertThat(future.get(10, TimeUnit.SECONDS)).isEqualTo(AddSkillResult.ADDED);
+        } finally { executor.shutdownNow(); }
+        assertThat(db.sql("select count(*) from user_skills where user_id = :a and skill_id = 1 and skill_type = 'learn'")
+            .param("a", A).query(Integer.class).single()).isEqualTo(1);
     }
 
     private List<Integer> race(Callable<MatchRequest> first, Callable<MatchRequest> second) throws Exception {

@@ -35,18 +35,17 @@ public class UserSkillRepository {
     }
 
     /**
-     * Adds a skill/type pairing for a user. Uses MERGE (upsert), the same
-     * technique as data.sql's seed data, so calling this twice with the same
-     * arguments is harmless - it's an idempotent "make sure this exists",
-     * not a strict "insert, and fail if it's already there".
+     * Adds a user/skill/type association. The composite primary key and atomic
+     * conflict handling keep repeated and concurrent adds idempotent on
+     * PostgreSQL and H2's PostgreSQL mode.
      */
     public void add(UUID userId, Long skillId, String skillType) {
         jdbcClient
             .sql(
                 """
-                MERGE INTO user_skills (user_id, skill_id, skill_type)
-                KEY (user_id, skill_id, skill_type)
+                INSERT INTO user_skills (user_id, skill_id, skill_type)
                 VALUES (:userId, :skillId, :skillType)
+                ON CONFLICT DO NOTHING
                 """)
             .param("userId", userId)
             .param("skillId", skillId)

@@ -180,6 +180,8 @@ discovery, public-data filtering and bidirectional block exclusion. These checks
 validate the real PostgreSQL engine using the supplied schema contract; they do
 not certify live Supabase login, deployed schema differences, grants, or RLS.
 
-Verified on PostgreSQL 17: the full Maven suite passed with 96 tests, zero
-failures/errors/skips, including all seven PostgreSQL contract checks. The
+Verified on PostgreSQL 17: the full Maven suite passed with 100 tests, zero
+failures/errors/skips, including all eleven PostgreSQL contract checks. The four
+additional skill-saving checks and the H2/PostgreSQL SQL compatibility fix are
+documented in [the skill-saving verification report](skill-save-postgres-verification.md). The
 disposable container was stopped and removed after verification.
