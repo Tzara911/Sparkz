@@ -46,7 +46,6 @@ button { color: var(--brown); }
 .primary-nav a, .profile-nav { font: inherit; color: var(--brown); background: none; text-decoration: none; font-size: 17px; font-weight: 700; border: 0; border-radius: 24px; padding: 9px 20px; white-space: nowrap; }
 .primary-nav a[aria-current='page'] { background: var(--peach); }
 .primary-nav a:hover, .profile-nav:hover { background: #ffe7c8; }
-.menu-toggle { display: none; }
 .user-avatar { justify-self: end; border: 0; border-radius: 50%; width: 44px; height: 44px; background: #ffd1a2; font-family: 'Yellowtail', cursive; font-size: 29px; }
 main { width: min(1360px, calc(100% - 80px)); margin: 0 auto; flex: 1; }
 .site-footer { margin: 44px 40px 0; border-top: 1px solid var(--line); }
@@ -62,25 +61,19 @@ main { width: min(1360px, calc(100% - 80px)); margin: 0 auto; flex: 1; }
 .profile-dialog p { color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
 .dialog-close { position: absolute; right: 18px; top: 18px; width: 36px; height: 36px; border: 1px solid var(--line); background: var(--cream); border-radius: 50%; font-size: 22px; }
 .profile-dialog .profile-name { color: var(--brown); font-size: 21px; font-weight: 700; }
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
   .primary-nav { gap: 4px; }
   .primary-nav a, .profile-nav { font-size: 15px; padding: 9px 14px; }
   .site-header { margin: 0 24px; }
   main { width: calc(100% - 48px); }
   .site-footer { margin-left: 24px; margin-right: 24px; }
 }
-@media (max-width: 900px) {
-  .header-inner { grid-template-columns: minmax(0, 1fr) auto auto; gap: 0 12px; }
-  .menu-toggle { grid-column: 2; grid-row: 1; display: inline-grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 11px; background: transparent; font-size: 20px; }
-  .user-avatar { grid-column: 3; grid-row: 1; }
-  .primary-nav { grid-column: 1 / -1; grid-row: 2; display: none; flex-direction: column; align-items: stretch; padding: 0 0 14px; gap: 4px; }
-  .primary-nav.is-open { display: flex; }
-  .primary-nav a, .profile-nav { text-align: left; }
-}
 @media (max-width: 600px) {
   .site-header { margin: 0 20px; }
+  .header-inner { grid-template-columns: 1fr auto; gap: 0 12px; padding-bottom: 14px; }
   .brand img { width: 184px; height: 64px; margin-left: -24px; }
-  .user-avatar { width: 38px; height: 38px; font-size: 26px; }
+  .user-avatar { grid-column: 2; grid-row: 1; width: 38px; height: 38px; font-size: 26px; }
+  .primary-nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; gap: 2px; }
   .primary-nav a, .profile-nav { font-size: 14px; padding: 8px 12px; }
   main { width: calc(100% - 40px); }
   .site-footer { margin: 32px 20px 0; }
