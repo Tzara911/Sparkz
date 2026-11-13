@@ -16,6 +16,7 @@
 .day-choice span { min-height: 66px; display: grid; place-items: center; background: #fff7e8; border: 1px solid var(--line); border-radius: 10px; color: var(--brown); font-weight: 800; transition: .15s ease; }
 .day-choice input:checked + span { color: #fffaf0; background: var(--orange-ink); border-color: var(--orange-ink); box-shadow: 0 3px 0 #6e2c12; }
 .day-choice input:focus-visible + span { outline: 3px solid var(--brown); outline-offset: 3px; }
+.day-choice input:disabled + span { opacity: .65; cursor: wait; }
 .form-footer { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-top: 25px; }
 .privacy-note { color: var(--muted); font-size: 13px; }
 .availability-page button { min-height: 44px; padding: 0 19px; color: #fffaf0; background: var(--orange-ink); border: 0; border-radius: 8px; font-weight: 800; }
