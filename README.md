@@ -60,6 +60,13 @@ The project includes a shared VS Code launch configuration for connecting Spring
 The `Run Sparkz` configuration loads the local `.env` file automatically. Each developer only needs to create `.env` once.
 
 Never commit or share `.env`. If the database password changes, update the local `.env` file.
+
+## Shared frontend layout (Issue #4)
+
+The root page (`/`) is the landing page: it retains Issue #4's hero banner, Explore skills link, and three introduction cards. It uses the same cream/orange/brown colors, DM Sans and Yellowtail fonts, and logo as discovery, while `/browse.html` remains the separate, functional discovery page. The landing page includes Bootstrap 5.3.3 from jsDelivr, `/sparkz-theme.css` for shared brand values and local fonts, and `/sparkz-layout.css` and `/sparkz-layout.js` for its header, footer, and landing layout.
+
+Home stays at `/`. Its right-hand Login button opens the separate `/login.html` page; visiting Home never redirects to sign-in. The login-page brand returns to Home. Browse, Match requests, and Availability also provide the same Login destination. The login provider still belongs to #5. Onboarding, Profile, and Manage Availability remain disabled in the existing Home navigation until the separate unified-navigation work is integrated. Discovery and match requests keep their profile dialog and feature content.
+
 ## Match requests
 
 Issue #8 adds sending, incoming/outgoing requests, and accept/decline/cancel actions.

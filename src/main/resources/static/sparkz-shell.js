@@ -3,14 +3,14 @@
   const page = document.body.dataset.page;
   document.querySelector('[data-sparkz-header]').innerHTML = `
     <header class="site-header"><div class="header-inner">
-      <a class="brand" href="/browse.html" aria-label="Sparkz home"><img src="/images/sparkz-logo.png" alt="Sparkz" width="216" height="75"></a>
+      <a class="brand" href="/" aria-label="Sparkz home"><img src="/images/sparkz-logo.png" alt="Sparkz" width="216" height="75"></a>
       <nav class="primary-nav" aria-label="Main navigation">
         <a href="/browse.html" ${page === 'browse' ? 'aria-current="page"' : ''}>Discover</a>
         <a href="/matches.html" ${page === 'matches' ? 'aria-current="page"' : ''}>Match requests</a>
         <a href="/availability.html" ${page === 'availability' ? 'aria-current="page"' : ''}>Availability</a>
         <button class="profile-nav" type="button" data-open-profile>My profile</button>
       </nav>
-      <button class="user-avatar" type="button" data-open-profile aria-label="Open my profile">?</button>
+      <div class="header-account"><a class="header-login" href="/login.html">Login</a><button class="user-avatar" type="button" data-open-profile aria-label="Open my profile" hidden>?</button></div>
     </div></header>`;
   document.querySelector('[data-sparkz-footer]').innerHTML = `
     <footer class="site-footer"><div class="footer-inner">
@@ -28,11 +28,13 @@
   async function loadProfile() {
     if (!profilePromise) profilePromise = (async () => {
       const token = await window.sparkzAuth?.getAccessToken();
-      const response = await fetch('/api/profiles/me', {headers: {Accept: 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {})}});
+      const response = await fetch('/api/profiles/me', {headers: {Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', ...(token ? {Authorization: `Bearer ${token}`} : {})}});
       if (!response.ok) throw new Error('Please sign in to view your profile.');
       const profile = await response.json();
       const name = profile.firstName || profile.username || 'Sparkz member';
       document.querySelector('.user-avatar').textContent = Array.from(name.trim())[0]?.toLocaleUpperCase() || '?';
+      document.querySelector('.header-login').hidden = true;
+      document.querySelector('.user-avatar').hidden = false;
       return profile;
     })().catch(error => { profilePromise = undefined; throw error; });
     return profilePromise;
