@@ -231,6 +231,7 @@
         api('/api/match-requests?direction=outgoing'), api('/api/skills')
       ]);
       me = profile;
+      window.dispatchEvent(new Event('sparkz:auth-changed'));
       skills = new Map(catalog.map(skill => [String(skill.skillId), skill.skillName]));
       acceptedMatches.clear();
       for (const match of [...incoming, ...outgoing]) if (match.status === 'Accepted') acceptedMatches.set(match.id, match);

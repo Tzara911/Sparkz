@@ -205,9 +205,12 @@ class LearningSessionTests {
     }
 
     @Test void frontendAssetsArePublicWhileSessionDataRequiresAuthentication() throws Exception {
-        for (String path : List.of("/sessions.html", "/sessions.js", "/sessions.css"))
+        for (String path : List.of("/", "/browse.html", "/matches.html", "/sessions.html",
+                "/sparkz-shell.js", "/sparkz-theme.css", "/sessions.js", "/sessions.css"))
             mvc.perform(get(path)).andExpect(status().isOk());
         mvc.perform(get("/api/learning-sessions")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/profiles/me").header("X-Requested-With", "XMLHttpRequest"))
+            .andExpect(status().isUnauthorized()).andExpect(header().doesNotExist("WWW-Authenticate"));
     }
 
     private String body() {
