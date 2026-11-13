@@ -1,9 +1,35 @@
 # Learning session scheduling (#18)
 
-This adds the backend API for manually proposing and managing sessions after an
-accepted match. It uses the existing `learning_sessions` table and the supplied
-Supabase column/value contract. The landing, discovery, and matching page designs
-are unchanged. A session form/page and automatic time suggestions are separate work.
+The session page and API let users manually propose and manage learning sessions
+after an accepted match. Storage follows the existing `learning_sessions` table
+and supplied Supabase column/value contract. The page uses the approved shared
+brand theme. Automatic time suggestions remain separate work.
+
+## Use the session page
+
+Open `/sessions.html`, use Sessions in the feature navigation, or select
+**Schedule a session** on an accepted incoming/outgoing match request. The accepted
+match is preselected from the URL when available. Partner names, matched skills,
+and compatible teaching/learning roles come from the existing authenticated
+profile, matching, skills, and discovery APIs; no user IDs need to be entered.
+
+Choose a start/end time and online or in-person mode. Online sessions require a
+meeting URL; in-person sessions require a location. Inputs and displayed session
+times use the browser/device time zone, shown beside the fields. The page sends
+UTC instants, previews the local zone/offset name, and rejects nonexistent local
+times skipped by daylight saving. Profile time zones do not silently override
+the device's date input semantics.
+
+The list supports all/incoming/outgoing directions, refresh, and pagination.
+Recipients see Accept/Decline for future pending proposals; participants can
+cancel pending/accepted future sessions. Decline and cancel have confirmation
+dialogs. Completed terminal transitions remove buttons; stale transitions refresh
+the list after a 409 response. API errors retain form input and re-enable controls.
+Empty, loading, sign-in, no-accepted-match, and retry states are included.
+
+Production uses `window.sparkzAuth.getAccessToken()` from #5 for fresh Bearer
+headers. The local demo reuses `/api/match-session` and CSRF cookies. Public page
+assets are allowed in the local/test filter; session data still requires auth.
 
 ## Try the complete flow locally
 
@@ -128,7 +154,13 @@ stored values, parent foreign keys, and competing accept/decline operations on
 the real PostgreSQL engine. These tests do not connect to the shared Supabase
 database or certify deployed RLS permissions.
 
-Validated for this change: all 142 tests passed on H2 and disposable PostgreSQL
+Validated for this change: all 143 tests passed on H2 and disposable PostgreSQL
 17 with zero failures, errors, or skips. The executable JAR's local HTTP demo
 also passed twice, including match reuse, both session modes, cookies/CSRF,
-accept/decline/cancel, and private listing.
+accept/decline/cancel, and private listing. Playwright exercised the actual local
+application with two accounts: accepted-match navigation, role selection, online
+and in-person proposals, status actions and confirmations, stale-state refresh,
+filters, pagination, text-only notes, and responsive layouts down to 320px.
+Sign-in/error response branches and the production Bearer hook were also tested
+with controlled responses; real JWT verification remains covered by the server
+tests. Browser checks had no JavaScript errors or missing static assets.

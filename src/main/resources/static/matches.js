@@ -67,6 +67,11 @@
           }
           card.append(actions);
         }
+        if (row.status === 'Accepted') {
+          const link = element('a', 'Schedule a session →', 'schedule-session-link');
+          link.href = `/sessions.html?${new URLSearchParams({matchRequestId:row.id})}`;
+          card.append(link);
+        }
         byId('requests').append(card);
       }
     } catch (e) { if (current === revision) message(e.message, true); }

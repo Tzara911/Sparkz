@@ -82,3 +82,5 @@ for issues #16 and #7, including the #17 frontend integration contract and #8 ma
 See [session APIs and the local two-account demo](docs/learning-sessions.md) for
 issue #18: proposing sessions from accepted matches, online/in-person details,
 private lists, and accept/decline/cancel permissions.
+Open `/sessions.html` or use **Schedule a session** on an accepted match request
+to manage sessions through the responsive page.

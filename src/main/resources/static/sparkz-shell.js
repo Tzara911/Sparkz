@@ -7,6 +7,7 @@
       <nav class="primary-nav" aria-label="Main navigation">
         <a href="/browse.html" ${page === 'browse' ? 'aria-current="page"' : ''}>Discover</a>
         <a href="/matches.html" ${page === 'matches' ? 'aria-current="page"' : ''}>Match requests</a>
+        <a href="/sessions.html" ${page === 'sessions' ? 'aria-current="page"' : ''}>Sessions</a>
         <button class="profile-nav" type="button" data-open-profile>My profile</button>
       </nav>
       <button class="user-avatar" type="button" data-open-profile aria-label="Open my profile">?</button>

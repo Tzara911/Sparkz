@@ -204,6 +204,12 @@ class LearningSessionTests {
         mvc.perform(get("/api/learning-sessions/999999").with(user(A.toString()))).andExpect(status().isNotFound());
     }
 
+    @Test void frontendAssetsArePublicWhileSessionDataRequiresAuthentication() throws Exception {
+        for (String path : List.of("/sessions.html", "/sessions.js", "/sessions.css"))
+            mvc.perform(get(path)).andExpect(status().isOk());
+        mvc.perform(get("/api/learning-sessions")).andExpect(status().isUnauthorized());
+    }
+
     private String body() {
         return "{\"matchRequestId\":"+matchId+",\"teacherId\":\""+A+"\",\"scheduledStart\":\""+START+"\",\"scheduledEnd\":\""+START.plusHours(1)
             +"\",\"mode\":\"online\",\"meetingUrl\":\"https://meet.example.test/sparkz\"}";
