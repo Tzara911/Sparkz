@@ -63,9 +63,9 @@ Never commit or share `.env`. If the database password changes, update the local
 
 ## Shared frontend layout (Issue #4)
 
-The root page (`/`) is the landing page: it retains Issue #4's hero banner, Explore skills link, and three introduction cards. It uses the same cream/orange/brown colors, DM Sans and Yellowtail fonts, and logo as discovery, while `/browse.html` remains the separate, functional discovery page. The landing page includes Bootstrap 5.3.3 from jsDelivr, `/sparkz-theme.css` for shared brand values and local fonts, and `/sparkz-layout.css` and `/sparkz-layout.js` for its header, footer, and landing layout.
+Home, Browse, Match requests, and the Availability page supplied by #32 use `/sparkz-shell.js` and `/sparkz-theme.css` for the shared navigation and footer. The primary tabs are Home, Browse, Match requests, and Sessions. Sessions stays disabled until its page from #33 / #18 is integrated. The server-verified account control sits on the right; Profile, onboarding, and availability management belong to its dropdown. The home hero and three introduction cards keep their layout; `/sparkz-layout.css` styles only home content.
 
-Home, Browse, Match requests, and Explore skills lead to implemented pages. Login, Onboarding, Profile, and Manage Availability keep their places in the landing navigation as disabled labels until their standalone pages are available. Discovery and match requests retain their existing `/sparkz-shell.js` navigation and profile dialog; their feature files are unchanged by this landing page update.
+Pages that include `data-login-page` on the body use the independent `/login.html` page supplied by #32. `data-availability-page` enables its implemented availability menu link. Without those page flags, the same shell keeps the existing unavailable/provider states, so the independent UI branch can be reviewed before #32 is integrated. The shared shell never simulates login or logout. See [shared navigation and auth integration](docs/shared-navigation.md).
 
 ## Match requests
 
@@ -73,6 +73,9 @@ Issue #8 adds sending, incoming/outgoing requests, and accept/decline/cancel act
 See [local demo, API contract, and Supabase integration notes](docs/match-requests.md).
 
 ## Availability and discovery
+
+PR #32's editor recovery, Login verification contract, and browser regression
+instructions are in [the frontend guide](docs/pr32-frontend.md).
 
 See [availability/discovery API contract and local testing](docs/availability-discovery.md)
 for issues #16 and #7, including the #17 frontend integration contract and #8 match-request links.
