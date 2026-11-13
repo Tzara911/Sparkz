@@ -69,3 +69,9 @@ See [local demo, API contract, and Supabase integration notes](docs/match-reques
 
 See [availability/discovery API contract and local testing](docs/availability-discovery.md)
 for issues #16 and #7, including the #17 frontend integration contract and #8 match-request links.
+
+## Learning session scheduling
+
+See [session APIs and the local two-account demo](docs/learning-sessions.md) for
+issue #18: proposing sessions from accepted matches, online/in-person details,
+private lists, and accept/decline/cancel permissions.
