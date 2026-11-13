@@ -63,9 +63,9 @@ Never commit or share `.env`. If the database password changes, update the local
 
 ## Shared frontend layout (Issue #4)
 
-Home (`/`), Browse (`/browse.html`), and Match requests (`/matches.html`) use `/sparkz-shell.js` and `/sparkz-theme.css` for one shared header, footer, brand theme, and account control. Navigation uses Home, Browse, Match requests, and a reserved Sessions entry. Sessions is disabled in this independent UI branch because its page and scheduling API belong to PR #33 / Issue #18. Login stays on the right and becomes a Profile menu after the server verifies authentication. The home hero and three introduction cards retain their existing layout; `/sparkz-layout.css` styles only the home content.
+Home, Browse, Match requests, and the Availability page supplied by #32 use `/sparkz-shell.js` and `/sparkz-theme.css` for the shared navigation and footer. The primary tabs are Home, Browse, Match requests, and Sessions. Sessions stays disabled until its page from #33 / #18 is integrated. The server-verified account control sits on the right; Profile, onboarding, and availability management belong to its dropdown. The home hero and three introduction cards keep their layout; `/sparkz-layout.css` styles only home content.
 
-My profile opens the existing profile overview. Account settings and Manage availability remain disabled until their pages exist; Onboarding is shown only for an incomplete profile. Login/logout use the optional #5 provider hooks. See [shared navigation and auth integration](docs/shared-navigation.md) for details.
+Pages that include `data-login-page` on the body use the independent `/login.html` page supplied by #32. `data-availability-page` enables its implemented availability menu link. Without those page flags, the same shell keeps the existing unavailable/provider states, so the independent UI branch can be reviewed before #32 is integrated. The shared shell never simulates login or logout. See [shared navigation and auth integration](docs/shared-navigation.md).
 
 ## Match requests
 

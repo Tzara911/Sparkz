@@ -4,6 +4,8 @@
   const footer = document.querySelector('[data-sparkz-footer]');
   if (!header || !footer) return;
   const page = document.body.dataset.page;
+  const hasLoginPage = document.body.hasAttribute('data-login-page');
+  const hasAvailabilityPage = document.body.hasAttribute('data-availability-page');
   const links = [['home', 'Home', '/'], ['browse', 'Browse', '/browse.html'],
     ['matches', 'Match requests', '/matches.html'], ['sessions', 'Sessions', '/sessions.html']];
   const chevron = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>';
@@ -14,13 +16,13 @@
       ? `<span class="nav-unavailable" aria-disabled="true" title="Coming soon">${label}</span>`
       : `<a href="${href}"${key === page ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav>
     <div class="account-wrap">
-      <button class="login-button" type="button" disabled aria-busy="true">Login</button>
+      ${hasLoginPage ? '<a class="login-button" href="/login.html">Login</a>' : '<button class="login-button" type="button" disabled aria-busy="true">Login</button>'}
       <button class="account-toggle" type="button" hidden aria-label="Profile menu" aria-haspopup="menu" aria-expanded="false" aria-controls="sparkz-account-menu"><span class="account-avatar" aria-hidden="true"></span><span class="account-label">Profile</span>${chevron}</button>
       <div class="account-menu" id="sparkz-account-menu" role="menu" aria-label="Account" hidden>
         <p class="account-name" role="presentation"></p>
         <button type="button" role="menuitem" data-shell-profile>My profile</button>
         <button type="button" role="menuitem" disabled aria-disabled="true">Account settings <span class="menu-note">Coming soon</span></button>
-        <button type="button" role="menuitem" disabled aria-disabled="true">Manage availability <span class="menu-note">Coming soon</span></button>
+        ${hasAvailabilityPage ? `<a role="menuitem" href="/availability.html"${page === 'availability' ? ' aria-current="page"' : ''}>Manage availability</a>` : '<button type="button" role="menuitem" disabled aria-disabled="true">Manage availability <span class="menu-note">Coming soon</span></button>'}
         <button type="button" role="menuitem" data-shell-onboarding disabled aria-disabled="true">Onboarding <span class="menu-note">Coming soon</span></button>
         <div class="account-separator" role="separator"></div>
         <button type="button" role="menuitem" data-shell-sign-out disabled aria-disabled="true">Sign out</button>
@@ -162,6 +164,7 @@
   }
   login.addEventListener('click', () => {
     closeNavigation();
+    if (hasLoginPage) return;
     updateProvider();
     if (!loginDialog.open) loginDialog.showModal();
   });
@@ -194,6 +197,24 @@
       p.textContent = text;
       p.className = className;
       content.append(p);
+    }
+    if (hasAvailabilityPage && profile) {
+      const current = authRevision;
+      try {
+        const token = await window.sparkzAuth?.getAccessToken();
+        const response = await fetch('/api/profiles/me/availability', {headers: {
+          Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest',
+          ...(token ? {Authorization: `Bearer ${token}`} : {})}});
+        if (!response.ok) return;
+        const availability = await response.json();
+        if (current !== authRevision || !profileDialog.open || !Array.isArray(availability.days)) return;
+        const names = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const days = availability.days.filter(day => Number.isInteger(day) && day >= 1 && day <= 7);
+        const summary = document.createElement('p');
+        summary.className = 'profile-availability';
+        summary.textContent = days.length ? `Generally available: ${days.map(day => names[day]).join(', ')}` : 'No general available days added yet.';
+        content.append(summary);
+      } catch (_) { /* Keep profile details available if the optional day summary fails. */ }
     }
   });
   signOut.addEventListener('click', async () => {

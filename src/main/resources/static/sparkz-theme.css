@@ -52,7 +52,7 @@ button { color: var(--brown); }
 .nav-toggle { display: none; }
 .account-wrap { position: relative; flex-shrink: 0; margin-left: auto; }
 .login-button, .account-toggle, .nav-toggle { font: inherit; color: var(--brown); cursor: pointer; }
-.login-button { min-height: 42px; padding: 9px 23px; background: var(--orange); border: 1px solid var(--orange); border-radius: 12px; font-weight: 750; }
+.login-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 9px 23px; background: var(--orange); border: 1px solid var(--orange); border-radius: 12px; font-weight: 750; text-decoration: none; }
 .login-button:hover:not(:disabled) { background: var(--orange-hover); }
 .login-button:disabled { opacity: .65; cursor: default; }
 .account-toggle { display: inline-flex; gap: 9px; align-items: center; padding: 6px 0 6px 8px; border: 0; border-radius: 12px; background: transparent; font-weight: 750; white-space: nowrap; }
@@ -60,8 +60,8 @@ button { color: var(--brown); }
 .account-avatar { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #ffd1a2; font: 26px 'Yellowtail', cursive; }
 .account-menu { position: absolute; top: calc(100% + 10px); right: 0; width: 260px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 110px); overflow-y: auto; overscroll-behavior: contain; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 28px #54200d18; }
 .account-name { color: var(--brown); margin: 0; padding: 9px 12px 12px; font-weight: 750; overflow-wrap: anywhere; border-bottom: 1px solid var(--line); }
-.account-menu button { display: block; width: 100%; text-align: left; padding: 11px 12px; font: inherit; font-size: 14px; color: var(--brown); border: 0; border-radius: 8px; background: transparent; }
-.account-menu button:hover:not(:disabled), .account-menu button:focus-visible { background: var(--peach); }
+.account-menu button, .account-menu a { display: block; width: 100%; text-align: left; padding: 11px 12px; font: inherit; font-size: 14px; color: var(--brown); border: 0; border-radius: 8px; background: transparent; text-decoration: none; }
+.account-menu button:hover:not(:disabled), .account-menu button:focus-visible, .account-menu a:hover, .account-menu a:focus-visible, .account-menu a[aria-current='page'] { background: var(--peach); }
 .account-menu button:disabled { color: var(--muted); cursor: default; }
 .menu-note { display: block; margin-top: 2px; font-size: 11px; font-weight: 400; color: var(--muted); }
 .account-separator { border-top: 1px solid var(--line); margin: 5px 0; }

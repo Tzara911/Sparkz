@@ -3,7 +3,8 @@
 This UI branch is based on main. It contains no learning-session backend,
 database, or scheduling-page changes; those remain in PR #33 / Issue #18.
 
-Home, Browse, and Match requests load `sparkz-shell.js` and `sparkz-theme.css`.
+Home, Browse, Match requests, and the Availability page from #32 load
+`sparkz-shell.js` and `sparkz-theme.css`.
 Each page mounts the same header and footer, with only the active tab changing.
 The logo and Home return to `/`, and the old Discover label is now Browse.
 The approved cream, orange, and brown theme, home hero/cards, and feature-page
@@ -17,8 +18,17 @@ integrated. This branch does not link to a page that main does not yet contain.
 
 Login sits at the right of every header. The shell verifies identity using
 `GET /api/profiles/me` before displaying the Profile dropdown and avatar.
-My profile opens the existing read-only profile overview. Account settings and
-Manage availability remain disabled; incomplete users also see Onboarding.
+My profile opens the existing read-only profile overview. Account settings
+remains disabled. Manage availability is enabled only when its page is present;
+incomplete users also see Onboarding. These destinations are never separate primary tabs.
+
+The `data-login-page` body attribute makes Login an ordinary link to the
+independent `/login.html` page from #32. `data-availability-page` enables the
+Profile menu's `/availability.html` link and the optional public-day summary.
+All four pages in #32 set both flags. The independent UI branch omits them
+until those pages are integrated, retaining its provider/unavailable states.
+The two branches share the exact same shell script and stylesheet; adding the
+page flags does not introduce another header implementation.
 
 The existing #5 integration may provide this adapter:
 
@@ -30,8 +40,9 @@ window.sparkzAuth = {
 };
 ```
 
-Sign-in and sign-out are enabled only when their provider hooks exist. After a
-hook resolves, the server is checked again. A 401/403 clears account state, a
+The fallback Google sign-in dialog and sign-out action require their provider
+hooks. When a standalone login page exists, its public link stays usable without
+a provider hook. After a hook resolves, the server is checked again. A 401/403 clears account state, a
 404 keeps an authenticated account awaiting profile setup, and network/server
 failures retain the last verified state with an error message. Tokens are not
 stored by the shell, and logout is never simulated. Google OAuth remains #5.
@@ -50,9 +61,11 @@ destinations are disabled rather than linked to missing pages.
 
 ## Verification
 
-The packaged application builds successfully and all 10 focused security/JWT
-tests pass. Browser checks cover the three existing pages at 12 viewport widths
-(36 page/width combinations), matching header/footer structure and geometry,
-anonymous and actual local Basic-authenticated account states, mobile and
-keyboard menus, and controlled provider lifecycle/error responses. No browser
-JavaScript errors, missing assets, or horizontal overflow were found.
+Both application packages build successfully, with 10 focused security/JWT
+tests passing on each branch. Browser checks cover the independent UI branch
+at 12 widths on three pages (36 cases), and the #32 integration at 13 widths on
+four pages (52 cases). They verify identical shared header/footer structure and
+geometry, the exact four primary tabs, anonymous Login and actual locally
+authenticated Profile states, mobile/keyboard menus, the standalone login route,
+and controlled provider lifecycle/error responses. No browser JavaScript errors,
+missing assets, or horizontal overflow were found.
