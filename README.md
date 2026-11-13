@@ -63,9 +63,9 @@ Never commit or share `.env`. If the database password changes, update the local
 
 ## Shared frontend layout (Issue #4)
 
-The root page (`/`) is the landing page: it retains Issue #4's hero banner, Explore skills link, and three introduction cards. It uses the same cream/orange/brown colors, DM Sans and Yellowtail fonts, and logo as discovery, while `/browse.html` remains the separate, functional discovery page. The landing page includes Bootstrap 5.3.3 from jsDelivr, `/sparkz-theme.css` for shared brand values and local fonts, and `/sparkz-layout.css` and `/sparkz-layout.js` for its header, footer, and landing layout.
+Home, Browse, Match requests, and the Availability page supplied by #32 use `/sparkz-shell.js` and `/sparkz-theme.css` for the shared navigation and footer. The primary tabs are Home, Browse, Match requests, and Sessions. Sessions stays disabled until its page from #33 / #18 is integrated. The server-verified account control sits on the right; Profile, onboarding, and availability management belong to its dropdown. The home hero and three introduction cards keep their layout; `/sparkz-layout.css` styles only home content.
 
-Home stays at `/`. Its right-hand Login button opens the separate `/login.html` page; visiting Home never redirects to sign-in. The login-page brand returns to Home. Browse, Match requests, and Availability also provide the same Login destination. The login provider still belongs to #5. Onboarding, Profile, and Manage Availability remain disabled in the existing Home navigation until the separate unified-navigation work is integrated. Discovery and match requests keep their profile dialog and feature content.
+Pages that include `data-login-page` on the body use the independent `/login.html` page supplied by #32. `data-availability-page` enables its implemented availability menu link. Without those page flags, the same shell keeps the existing unavailable/provider states, so the independent UI branch can be reviewed before #32 is integrated. The shared shell never simulates login or logout. See [shared navigation and auth integration](docs/shared-navigation.md).
 
 ## Match requests
 

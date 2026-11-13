@@ -26,6 +26,7 @@
         const response = await fetch('/api/match-session');
         if (!response.ok) throw new Error('Please sign in before managing availability.');
         session = await response.json();
+        window.dispatchEvent(new Event('sparkz:auth-changed'));
       }
       if (options.method) headers[session.csrfHeader] = session.csrfToken;
     }
