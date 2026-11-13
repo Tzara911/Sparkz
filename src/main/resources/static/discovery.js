@@ -4,6 +4,7 @@
   const weekdays = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   let offset = 0, revision = 0;
   const limit = 12;
+  let identityAnnounced = false;
   function element(tag, text, className) {
     const node = document.createElement(tag);
     node.textContent = text;
@@ -17,6 +18,10 @@
       let problem = {};
       try { problem = await response.json(); } catch (_) { /* Basic auth can return an empty body. */ }
       throw new Error(problem.detail || (response.status === 401 ? 'Please sign in to discover people.' : `Could not load people (${response.status}).`));
+    }
+    if (!identityAnnounced) {
+      identityAnnounced = true;
+      window.dispatchEvent(new Event('sparkz:auth-changed'));
     }
     return response.json();
   }

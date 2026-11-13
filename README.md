@@ -63,9 +63,9 @@ Never commit or share `.env`. If the database password changes, update the local
 
 ## Shared frontend layout (Issue #4)
 
-The root page (`/`) is the landing page: it retains Issue #4's hero banner, Explore skills link, and three introduction cards. It uses the same cream/orange/brown colors, DM Sans and Yellowtail fonts, and logo as discovery, while `/browse.html` remains the separate, functional discovery page. The landing page includes Bootstrap 5.3.3 from jsDelivr, `/sparkz-theme.css` for shared brand values and local fonts, and `/sparkz-layout.css` and `/sparkz-layout.js` for its header, footer, and landing layout.
+Home (`/`), Browse (`/browse.html`), and Match requests (`/matches.html`) use `/sparkz-shell.js` and `/sparkz-theme.css` for one shared header, footer, brand theme, and account control. Navigation uses Home, Browse, Match requests, and a reserved Sessions entry. Sessions is disabled in this independent UI branch because its page and scheduling API belong to PR #33 / Issue #18. Login stays on the right and becomes a Profile menu after the server verifies authentication. The home hero and three introduction cards retain their existing layout; `/sparkz-layout.css` styles only the home content.
 
-Home, Browse, Match requests, and Explore skills lead to implemented pages. Login, Onboarding, Profile, and Manage Availability keep their places in the landing navigation as disabled labels until their standalone pages are available. Discovery and match requests retain their existing `/sparkz-shell.js` navigation and profile dialog; their feature files are unchanged by this landing page update.
+My profile opens the existing profile overview. Account settings and Manage availability remain disabled until their pages exist; Onboarding is shown only for an incomplete profile. Login/logout use the optional #5 provider hooks. See [shared navigation and auth integration](docs/shared-navigation.md) for details.
 
 ## Match requests
 
