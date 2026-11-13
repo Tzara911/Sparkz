@@ -70,6 +70,9 @@ Pages that include `data-login-page` on the body use the independent `/login.htm
 ## Match requests
 
 Issue #8 adds sending, incoming/outgoing requests, and accept/decline/cancel actions.
+Choose a partner in Browse and click Connect: Match requests carries over the
+person and skill, displays their name and school, and offers compatible skills
+without asking users to enter IDs. Incoming/outgoing cards also show names.
 See [local demo, API contract, and Supabase integration notes](docs/match-requests.md).
 
 ## Availability and discovery
