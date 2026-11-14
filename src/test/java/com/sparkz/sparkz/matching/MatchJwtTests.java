@@ -132,14 +132,16 @@ class MatchJwtTests {
 
     private static final List<String> PROFILE_AND_SKILL_PATHS = List.of(
         "/api/users/me", "/api/profiles/me", "/api/profiles/me/skills",
-        "/api/skills", "/api/skills/1", "/api/discovery", "/api/profiles/me/availability");
+        "/api/skills", "/api/skills/1", "/api/discovery", "/api/profiles/me/availability",
+        "/api/learning-sessions", "/api/learning-sessions/1");
 
     // Test-only endpoints verify the shared filter/Principal contract, not teammates' CRUD.
     @RestController
     @Profile("jwt-check")
     static class ProfileAndSkillProbe {
         @RequestMapping({"/api/users/me", "/api/profiles/me", "/api/profiles/me/skills",
-            "/api/skills", "/api/skills/1", "/api/discovery", "/api/profiles/me/availability"})
+            "/api/skills", "/api/skills/1", "/api/discovery", "/api/profiles/me/availability",
+            "/api/learning-sessions", "/api/learning-sessions/1"})
         String identity(Principal principal) {
             return principal == null ? "missing identity" : principal.getName();
         }

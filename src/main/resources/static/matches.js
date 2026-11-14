@@ -177,7 +177,7 @@
             button.addEventListener('click', () => changeStatus(row, status, actions, selected)); actions.append(button);
           }
           side.append(actions);
-        } else if (row.status === 'Accepted' && document.body.hasAttribute('data-session-planner')) {
+        } else if (row.status === 'Accepted')) {
           const link = element('a', 'Schedule a session →', 'schedule-session'); link.href = `/sessions.html?${new URLSearchParams({matchRequestId: row.id})}`; side.append(link);
         }
         card.append(side); byId('requests').append(card);

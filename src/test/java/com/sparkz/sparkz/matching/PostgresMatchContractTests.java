@@ -5,8 +5,12 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import com.sparkz.sparkz.availability.AvailabilityService;
 import com.sparkz.sparkz.discovery.DiscoveryService;
+import com.sparkz.sparkz.sessions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -45,8 +49,10 @@ class PostgresMatchContractTests {
     @Autowired AvailabilityService availability;
     @Autowired DiscoveryService discovery;
     @Autowired MockMvc mvc;
+    @Autowired LearningSessionService sessions;
 
     @BeforeEach void reset() {
+        db.sql("delete from learning_sessions").update();
         db.sql("delete from match_requests").update();
         db.sql("delete from blocked_users").update();
         db.sql("delete from user_skills").update();
@@ -145,7 +151,60 @@ class PostgresMatchContractTests {
         assertThat(discovery.browse(A, null, null, null, false, 0, 20).profiles()).isEmpty();
     }
 
-    private List<Integer> race(Callable<MatchRequest> first, Callable<MatchRequest> second) throws Exception {
+    @Test void learningSessionsRoundTripPostgresIdentityRolesOffsetsAndNullableFields() {
+        var match = operations.sendRequest(A,B,1);
+        operations.acceptRequest(B,match.id());
+        db.sql("alter table learning_sessions alter column session_id restart with 2147483648").update();
+        OffsetDateTime start = OffsetDateTime.now(ZoneOffset.ofHours(-6)).plusDays(2).truncatedTo(ChronoUnit.MICROS);
+        var online = sessions.propose(B,new LearningSessionController.Propose(match.id(),A,start,start.plusHours(1),
+            SessionMode.ONLINE,null,"https://meet.example.test/room",null));
+        assertThat(online.id()).isGreaterThan(Integer.MAX_VALUE);
+        assertThat(online.scheduledStart()).isEqualTo(start.toInstant());
+        assertThat(online.scheduledEnd()).isEqualTo(start.plusHours(1).toInstant());
+        assertThat(online.proposedBy()).isEqualTo(B);
+        assertThat(online.teacherId()).isEqualTo(A);
+        assertThat(online.learnerId()).isEqualTo(B);
+        assertThat(online.location()).isNull();
+        assertThat(online.message()).isNull();
+        assertThat(online.createdAt()).isNotNull();
+        assertThat(sessions.change(A,online.id(),SessionStatus.ACCEPTED).status()).isEqualTo(SessionStatus.ACCEPTED);
+        assertThat(sessions.change(B,online.id(),SessionStatus.CANCELED).status()).isEqualTo(SessionStatus.CANCELED);
+        assertThat(db.sql("select status from learning_sessions where session_id=:id").param("id",online.id()).query(String.class).single()).isEqualTo("canceled");
+        var inPerson = sessions.propose(A,new LearningSessionController.Propose(match.id(),A,start,start.plusHours(1),
+            SessionMode.IN_PERSON,"  Library  ",null,"  Bring notes  "));
+        assertThat(inPerson.meetingUrl()).isNull();
+        assertThat(inPerson.location()).isEqualTo("Library");
+        assertThat(inPerson.message()).isEqualTo("Bring notes");
+        assertThat(sessions.change(B,inPerson.id(),SessionStatus.DECLINED).status()).isEqualTo(SessionStatus.DECLINED);
+        assertThat(sessions.list(B,LearningSessionController.Direction.all,match.id(),0,20).total()).isEqualTo(2);
+        expect(404,()->sessions.get(new UUID(0,99),online.id()));
+    }
+
+    @Test void competingSessionAcceptAndDeclineHaveOneWinnerOnPostgres() throws Exception {
+        var match = operations.sendRequest(A,B,1);
+        operations.acceptRequest(B,match.id());
+        OffsetDateTime start = OffsetDateTime.now(ZoneOffset.UTC).plusDays(2);
+        var session = sessions.propose(A,new LearningSessionController.Propose(match.id(),A,start,start.plusHours(1),
+            SessionMode.ONLINE,null,"https://meet.example.test/room",null));
+        assertThat(race(()->sessions.change(B,session.id(),SessionStatus.ACCEPTED),
+            ()->sessions.change(B,session.id(),SessionStatus.DECLINED))).containsExactlyInAnyOrder(200,409);
+        assertThat(sessions.get(A,session.id()).status()).isIn(SessionStatus.ACCEPTED,SessionStatus.DECLINED);
+    }
+
+    @Test void postgresEnforcesSessionParentAndStoredModeContract() {
+        var match = operations.sendRequest(A,B,1);
+        operations.acceptRequest(B,match.id());
+        OffsetDateTime start = OffsetDateTime.now(ZoneOffset.UTC).plusDays(2);
+        var session = sessions.propose(A,new LearningSessionController.Propose(match.id(),A,start,start.plusHours(1),
+            SessionMode.ONLINE,null,"https://meet.example.test/room",null));
+        assertThatThrownBy(()->db.sql("delete from match_requests where request_id=:id").param("id",match.id()).update())
+            .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(()->db.sql("update learning_sessions set mode='remote' where session_id=:id").param("id",session.id()).update())
+            .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(sessions.get(B,session.id()).mode()).isEqualTo(SessionMode.ONLINE);
+    }
+
+    private List<Integer> race(Callable<?> first, Callable<?> second) throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch start = new CountDownLatch(1);
         try {
