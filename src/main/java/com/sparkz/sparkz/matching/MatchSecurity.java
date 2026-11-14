@@ -22,7 +22,8 @@ public class MatchSecurity {
         // Their controllers still enforce ownership; this chain supplies authentication.
         http.securityMatcher("/api/match-requests", "/api/match-requests/**",
                 "/api/users", "/api/users/**", "/api/profiles", "/api/profiles/**",
-                "/api/skills", "/api/skills/**", "/api/discovery", "/api/discovery/**")
+                "/api/skills", "/api/skills/**", "/api/discovery", "/api/discovery/**",
+                "/api/learning-sessions", "/api/learning-sessions/**")
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .csrf(csrf -> csrf.disable()); // Bearer tokens only; no cookie authentication.
         if (issuer.isBlank()) {
