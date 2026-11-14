@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff9e9">
+  <title>Learning sessions · Sparkz</title>
+  <link rel="preload" href="/fonts/dm-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/sparkz-theme.css">
+  <link rel="stylesheet" href="/sessions.css">
+  <script src="/sparkz-shell.js" defer></script>
+  <script src="/sessions.js" defer></script>
+</head>
+<body data-page="sessions">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div data-sparkz-header></div>
+  <main id="main" class="sessions-page">
+    <div class="sessions-heading">
+      <div><h1>Learning sessions</h1><p>Turn an accepted match into your next skill exchange.</p></div>
+      <a href="/matches.html">View match requests <span aria-hidden="true">→</span></a>
+    </div>
+    <p id="session-message" class="session-message" role="status" aria-live="polite"></p>
+    <div class="sessions-layout">
+      <section class="session-planner" aria-labelledby="planner-title">
+        <h2 id="planner-title">Plan a session</h2>
+        <p class="planner-intro">Pick a partner, find a time, and send an invitation.</p>
+        <p id="planner-state" class="planner-state" role="status">Loading your accepted matches…</p>
+        <form id="session-form">
+          <fieldset id="session-fields" disabled>
+            <label>Accepted match<select id="session-match" required><option value="">Choose an accepted match</option></select></label>
+            <label>Your role<select id="session-teacher" required disabled><option value="">Choose a match first</option></select></label>
+            <div class="session-time-fields">
+              <label>Starts<input id="session-start" type="datetime-local" required></label>
+              <label>Ends<input id="session-end" type="datetime-local" required></label>
+            </div>
+            <p id="session-time-zone" class="session-help"></p>
+            <p id="session-time-preview" class="session-help" aria-live="polite"></p>
+            <label>Meet<select id="session-mode"><option value="online">Online</option><option value="in-person">In person</option></select></label>
+            <label id="meeting-url-field">Meeting link<input id="session-url" type="url" maxlength="2000" placeholder="https://meet.example.com/your-room" required></label>
+            <label id="location-field" hidden>Location<input id="session-location" type="text" maxlength="2000" placeholder="Library, room 2" disabled></label>
+            <label><span>Message <span class="session-optional">optional</span></span><textarea id="session-note" rows="3" maxlength="2000" placeholder="What would you like to work on?"></textarea></label>
+            <button id="propose-session" class="session-primary" type="submit">Send invitation <span aria-hidden="true">→</span></button>
+          </fieldset>
+        </form>
+        <p class="session-help">Need a partner? <a href="/matches.html">Accept a match request</a> to get started.</p>
+      </section>
+      <section class="session-inbox" aria-labelledby="inbox-title">
+        <div class="session-inbox-heading"><h2 id="inbox-title">Your sessions</h2><span id="session-count"></span></div>
+        <nav class="session-tabs" aria-label="Session direction">
+          <button id="sessions-all" type="button" aria-pressed="true">All</button>
+          <button id="sessions-incoming" type="button" aria-pressed="false">Incoming</button>
+          <button id="sessions-outgoing" type="button" aria-pressed="false">Outgoing</button>
+          <button id="sessions-refresh" type="button">Refresh</button>
+        </nav>
+        <div id="session-list" aria-live="polite" aria-busy="true"><p class="session-empty">Loading your sessions…</p></div>
+        <nav class="session-pagination" aria-label="Session pages">
+          <button id="sessions-previous" type="button" disabled>Previous</button>
+          <span id="session-page-count"></span>
+          <button id="sessions-next" type="button" disabled>Next</button>
+        </nav>
+      </section>
+    </div>
+    <noscript><p>Enable JavaScript to propose and manage learning sessions.</p></noscript>
+  </main>
+  <dialog id="session-confirm" class="profile-dialog" aria-labelledby="session-confirm-title">
+    <h2 id="session-confirm-title"></h2>
+    <p id="session-confirm-detail"></p>
+    <form method="dialog" class="session-confirm-actions"><button value="keep">Go back</button><button id="session-confirm-action" class="session-primary" value="confirm"></button></form>
+  </dialog>
+  <div data-sparkz-footer></div>
+</body>
+</html>

@@ -21,6 +21,8 @@ input { color: var(--brown); background: var(--cream); border: 1px solid #d5aa81
 .empty { padding: 48px 20px; text-align: center; color: var(--muted); }
 #message { min-height: 24px; }
 #message.error { color: #a12c13; }
+.schedule-session-link { color: var(--brown); background: var(--orange); border: 1px solid var(--orange); border-radius: 11px; padding: 12px 18px; font-weight: 700; text-decoration: none; }
+.schedule-session-link:hover { background: var(--orange-hover); }
 @media (max-width: 600px) {
   .requests-page { padding-top: 30px; }
   #send-form { display: grid; }
