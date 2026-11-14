@@ -1,4 +1,4 @@
-# Sparkz
+Sparkz
 A web application that connects users based on the skills they want to teach and learn
 ## Git Workflow
 
@@ -63,9 +63,13 @@ Never commit or share `.env`. If the database password changes, update the local
 
 ## Shared frontend layout (Issue #4)
 
-All four pages (`/`, `/browse.html`, `/matches.html`, `/sessions.html`) use `/sparkz-shell.js` and `/sparkz-theme.css` for one shared header, footer, brand theme, and account control. Navigation is Home, Browse, Match requests, Sessions; only the active tab changes. Login stays on the right and becomes a Profile menu after the server verifies authentication. The root page keeps Issue #4's hero banner and three introduction cards; `/sparkz-layout.css` contains only those home content styles. Its Bootstrap stylesheet is separate from the shared navigation styles.
+All four pages (`/`, `/browse.html`, `/matches.html`, `/sessions.html`) and the Availability page supplied by #32 use `/sparkz-shell.js` and `/sparkz-theme.css` for one shared header, footer, brand theme, and account control. The primary tabs are Home, Browse, Match requests, and Sessions; only the active tab changes. The server-verified account control sits on the right, showing Login when signed out and a Profile menu after authentication is verified.
 
-My profile opens the existing profile overview. Account settings and Manage availability remain clearly disabled until their pages are implemented; Onboarding is shown only for an incomplete profile. Login/logout call optional #5 provider hooks and never simulate authentication. See [shared navigation and auth integration](docs/shared-navigation.md) for the provider adapter and browser verification.
+The root page keeps Issue #4's hero banner and three introduction cards. `/sparkz-layout.css` contains only home content styles, and the home page's Bootstrap stylesheet is separate from the shared navigation styles.
+
+My profile opens the existing profile overview. Account settings remains disabled until implemented. Onboarding is shown only for an incomplete profile. Pages with `data-availability-page` on the body enable the implemented Manage availability link; otherwise, that link remains disabled.
+
+Pages with `data-login-page` on the body use the independent `/login.html` page supplied by #32. Without that flag, the shell retains the existing unavailable/provider states and optional #5 provider hooks. The shared shell never simulates login or logout. See [shared navigation and auth integration](docs/shared-navigation.md) for the provider adapter and browser verification.
 
 ## Match requests
 
@@ -73,6 +77,9 @@ Issue #8 adds sending, incoming/outgoing requests, and accept/decline/cancel act
 See [local demo, API contract, and Supabase integration notes](docs/match-requests.md).
 
 ## Availability and discovery
+
+PR #32's editor recovery, Login verification contract, and browser regression
+instructions are in [the frontend guide](docs/pr32-frontend.md).
 
 See [availability/discovery API contract and local testing](docs/availability-discovery.md)
 for issues #16 and #7, including the #17 frontend integration contract and #8 match-request links.

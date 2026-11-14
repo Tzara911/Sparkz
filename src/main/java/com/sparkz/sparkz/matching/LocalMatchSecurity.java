@@ -22,6 +22,7 @@ public class LocalMatchSecurity {
     @Bean
     SecurityFilterChain localSecurity(HttpSecurity http) throws Exception {
         return http.authorizeHttpRequests(a -> a.requestMatchers("/", "/index.html", "/sparkz-layout.css",
+                    "/login.html", "/login.js", "/login.css", "/availability.html", "/availability.js", "/availability.css",
                     "/matches.html", "/matches.js", "/matches.css", "/browse.html", "/discovery.js", "/discovery.css",
                     "/sessions.html", "/sessions.js", "/sessions.css",
                     "/sparkz-theme.css", "/sparkz-shell.js", "/fonts/**", "/images/**").permitAll()
@@ -31,3 +32,4 @@ public class LocalMatchSecurity {
             .build();
     }
 }
+

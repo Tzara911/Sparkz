@@ -1,87 +1,86 @@
-# Shared navigation and account controls
+Shared navigation and account controls
 
-Home, Browse, Match requests, and Sessions all load `sparkz-shell.js` and
-`sparkz-theme.css`. Each page has one `data-sparkz-header` and
+Home, Browse, Match requests, Sessions, and Availability load `sparkz-shell.js`
+and `sparkz-theme.css`. Each page has one `data-sparkz-header` and
 `data-sparkz-footer` mount and sets `body[data-page]` to `home`, `browse`,
-`matches`, or `sessions`. The navigation structure, logo, account control, and
-footer are identical; `aria-current="page"` highlights the active destination.
-The logo and Home always return to `/`. The previous Discover label is Browse.
+`matches`, `sessions`, or `availability`. The four primary tabs are Home,
+Browse, Match requests, and Sessions. Sessions links to `/sessions.html`.
+Availability belongs to the Profile dropdown, rather than the primary tabs.
+`aria-current="page"` highlights the active destination. The logo and Home
+return to `/`; the previous Discover label is Browse.
 
-`sparkz-layout.css` now styles only the home hero/cards. The separate home
-navigation script was removed. Feature content, filtering, matching, and session
-forms keep their existing layout and API contract.
+`sparkz-layout.css` styles only the home hero and three introduction cards.
+The home Bootstrap stylesheet is separate from the shared navigation styles.
+Feature content, filtering, matching, availability, and session forms retain
+their existing layout and API contracts.
 
-## Behavior
+## Account controls
 
-On a narrow screen, the hamburger button expands the same navigation. It can be
-closed with Escape or an outside click. The account control stays at the top
-right. Profile opens a separate account menu; opening it closes the mobile
-navigation. Keyboard users can move through enabled items with arrow keys,
-Home/End, Tab, and Escape. Escape returns focus to the triggering button.
+Login sits at the right of every header. The shell verifies identity using
+`GET /api/profiles/me` before displaying the Profile dropdown and avatar.
+My profile opens the existing read-only profile overview. Account settings
+remains disabled. Incomplete users also see the disabled Onboarding entry;
+completed users do not. Unimplemented destinations are not linked to missing pages.
 
-My profile opens the existing read-only profile overview. Account settings and
-Manage availability are disabled with a Coming soon label because their pages do
-not yet exist. Incomplete users also see Onboarding; completed users do not.
-No unavailable destination is linked to a missing HTML file.
+The `data-login-page` body attribute makes Login an ordinary link to the
+independent `/login.html` page from #32. `data-availability-page` enables the
+Profile menu's `/availability.html` link and the optional public-day summary.
+Home, Browse, Match requests, Sessions, and Availability all set both flags.
+Without them, the same shell retains its provider/unavailable states.
 
 ## Authentication integration for #5
 
-The shell verifies the current identity with `GET /api/profiles/me`. A successful
-response shows Profile, avatar initial, and the server-returned name. A 401/403
-shows Login and clears the profile overview. A 404 means the authenticated user
-still needs a profile, and keeps the account control available. A network/server
-error retains the last verified account state and displays an error; it does not
-pretend that sign-in or sign-out succeeded.
-
-Background profile checks send `X-Requested-With: XMLHttpRequest`; this avoids a
-native Basic-auth challenge on the anonymous local home page. Matching, discovery,
-and session pages notify the shell after their authenticated local/demo requests
-succeed, so the header updates after the Basic login flow as well.
-
-#5 may provide this adapter before the shell runs:
+The existing #5 integration may provide this adapter before the shell runs:
 
 ```js
 window.sparkzAuth = {
-  async getAccessToken() { /* return the current Supabase access token */ },
-  async signIn() { /* start/complete the team's Google sign-in flow */ },
+  async getAccessToken() { /* current Supabase access token */ },
+  async signIn() { /* the team's Google sign-in flow */ },
   async signOut() { /* terminate the actual Supabase session */ }
 };
 ```
 
-`getAccessToken()` is the existing feature-page contract. Login's Google button
-is enabled only when `signIn()` exists. Without it, the dialog clearly explains
-that sign-in is not available yet. Sign out is similarly disabled without its
-provider hook, including in the local Basic demo. The shell never stores tokens,
-clears unrelated browser storage, or hides the account to fake logout.
+`getAccessToken()` is also the existing feature-page contract. The standalone
+Login page remains accessible without a provider hook. The fallback Google
+sign-in dialog and sign-out action require their provider hooks, including in
+the local Basic demo. The shell never stores tokens, clears unrelated browser
+storage, or hides the account to simulate logout. Google OAuth remains #5.
 
-After a provider hook resolves, the shell rechecks the server. Confirmed sign-out
-returns to the public home page. Authentication changes elsewhere can call
-`window.sparkzShell.refreshAuth()` or dispatch
+After a provider hook resolves, the shell checks the server again. A successful
+profile response shows Profile, the avatar initial, and the server-returned name.
+A 401/403 clears account state and the profile overview. A 404 keeps an
+authenticated account awaiting profile setup. Network/server errors retain the
+last verified state and display an error. Confirmed sign-out returns to Home.
+Newer responses take precedence over older requests.
+
+Authentication changes elsewhere can call `window.sparkzShell.refreshAuth()` or
 `window.dispatchEvent(new Event('sparkz:auth-changed'))`. The shell also rechecks
-when returning to a visible browser tab. Newer responses take precedence over
-older requests so a delayed response cannot restore a previous identity.
+when the tab becomes visible. Discovery, match requests, and sessions announce
+successful local authentication. Background checks send
+`X-Requested-With: XMLHttpRequest` to avoid an unsolicited Basic-auth prompt on
+anonymous Home visits.
 
-These hooks do not implement Google OAuth, account settings, onboarding, or
-availability editing. Those features remain their existing tickets; the shared
-shell supplies consistent, honest entry states for their integration.
+## Mobile and keyboard behavior
+
+The mobile menu expands the same navigation and leaves the account control at
+the top right. Opening the account menu closes mobile navigation. Arrow keys,
+Home/End, Escape, outside clicks, and focus return are supported.
 
 ## Verification
 
-The Spring security regression test verifies public access to all four pages and
-shared assets, private session API protection, and background profile checks
-without a Basic-auth challenge. Existing token tests continue to validate the
-production JWT routes.
+Run the focused security/session/JWT tests with:
 
-Browser checks cover consistent navigation/footer markup and geometry on all four
-pages, the home and Browse body structures, active tabs, navigation between pages,
-Login/Profile states, keyboard and outside-click dismissal, mobile widths,
-read-only profile data, and unavailable actions. Provider lifecycle/error cases
-use controlled auth-adapter/API responses; the local authenticated state is also
-checked against the actual application with Basic credentials.
+```sh
+./mvnw -Dtest=MatchSecurityTests,MatchSecurityStartupTests,MatchJwtTests,LearningSessionTests test
+```
 
-Verified for this update: all 54 focused security/session/JWT tests pass. Browser
-checks pass for 48 page/viewport combinations (four pages, 320–1440px), identical
-logged-out/logged-in shell markup and geometry, provider lifecycle/error states,
-and the complete two-account session-page regression. No JavaScript errors or
-missing static assets were found. The provider lifecycle checks use controlled
-responses; real Google OAuth still belongs to #5.
+The security regression tests cover public pages and shared assets, private
+session API protection, and background profile checks without a Basic-auth
+challenge. Existing token tests validate the production JWT routes.
+
+See [the frontend guide](pr32-frontend.md) for the isolated local-profile
+availability and Login browser runner, and [the session guide](learning-sessions.md)
+for the two-account scheduling demo. Check all five shared-shell pages for active
+navigation, Login/Profile state, mobile and keyboard menus, and the standalone
+Login and availability links, including when entering from Sessions.
+Controlled provider responses do not certify live Google OAuth or Supabase RLS.
