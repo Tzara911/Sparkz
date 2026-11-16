@@ -139,4 +139,164 @@ class ProfileControllerTests {
                     .content(invalidProfileJson))
             .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void deactivatesTheAuthenticatedUsersOwnAccount() throws Exception {
+        mockMvc
+            .perform(
+                put("/api/profiles/me/deactivate")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accountStatus").value("deactivated"));
+
+        mockMvc
+            .perform(get("/api/profiles/me").with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accountStatus").value("deactivated"));
+    }
+
+    @Test
+    void deactivatingIsIdempotent() throws Exception {
+        mockMvc
+            .perform(
+                put("/api/profiles/me/deactivate")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
+            .andExpect(status().isOk());
+
+        mockMvc
+            .perform(
+                put("/api/profiles/me/deactivate")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accountStatus").value("deactivated"));
+    }
+
+    @Test
+    void reactivatesADeactivatedAccount() throws Exception {
+        mockMvc
+            .perform(
+                put("/api/profiles/me/deactivate")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
+            .andExpect(status().isOk());
+
+        mockMvc
+            .perform(
+                put("/api/profiles/me/activate")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accountStatus").value("active"));
+    }
+
+    @Test
+    void deactivatingOwnAccountDoesNotAffectOtherUsers() throws Exception {
+        mockMvc
+            .perform(
+                put("/api/profiles/me/deactivate")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_1, "local-demo")).with(csrf()))
+            .andExpect(status().isOk());
+
+        mockMvc
+            .perform(get("/api/profiles/me").with(httpBasic(LocalLoginConfig.DEMO_USER_2, "local-demo")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accountStatus").value("active"));
+    }
+
+    @Test
+    void completesOnboardingOnceAllRequiredFieldsAreFilledIn() throws Exception {
+        String completeProfileJson =
+            """
+            {
+              "username": "lee_updated",
+              "email": "lee.updated@example.com",
+              "firstName": "Lee",
+              "lastName": "Learner",
+              "schoolName": "Sparkz High",
+              "gradeYear": "12",
+              "address": "123 Main St",
+              "phone": "555-1234"
+            }
+            """;
+
+        mockMvc
+            .perform(
+                put("/api/profiles/me")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_2, "local-demo")).with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(completeProfileJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.onboardingCompleted").value(true));
+    }
+
+    @Test
+    void doesNotCompleteOnboardingWhenARequiredFieldIsMissing() throws Exception {
+        String incompleteProfileJson =
+            """
+            {
+              "username": "lee_updated",
+              "email": "lee.updated@example.com",
+              "firstName": "Lee",
+              "lastName": "Learner",
+              "schoolName": "Sparkz High",
+              "gradeYear": "12",
+              "address": "123 Main St"
+            }
+            """;
+
+        mockMvc
+            .perform(
+                put("/api/profiles/me")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_2, "local-demo")).with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(incompleteProfileJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.onboardingCompleted").value(false));
+    }
+
+    @Test
+    void onceCompletedOnboardingStaysCompletedEvenIfARequiredFieldIsLaterCleared() throws Exception {
+        String completeProfileJson =
+            """
+            {
+              "username": "lee_updated",
+              "email": "lee.updated@example.com",
+              "firstName": "Lee",
+              "lastName": "Learner",
+              "schoolName": "Sparkz High",
+              "gradeYear": "12",
+              "address": "123 Main St",
+              "phone": "555-1234"
+            }
+            """;
+
+        mockMvc
+            .perform(
+                put("/api/profiles/me")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_2, "local-demo")).with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(completeProfileJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.onboardingCompleted").value(true));
+
+        String missingPhoneJson =
+            """
+            {
+              "username": "lee_updated",
+              "email": "lee.updated@example.com",
+              "firstName": "Lee",
+              "lastName": "Learner",
+              "schoolName": "Sparkz High",
+              "gradeYear": "12",
+              "address": "123 Main St"
+            }
+            """;
+
+        mockMvc
+            .perform(
+                put("/api/profiles/me")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_2, "local-demo")).with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(missingPhoneJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.onboardingCompleted").value(true));
+    }
 }
