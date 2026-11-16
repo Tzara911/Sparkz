@@ -45,4 +45,24 @@ public class ProfileController {
         }
         return ResponseEntity.ok(updatedProfile.get());
     }
+
+    @PutMapping("/api/profiles/me/activate")
+    public ResponseEntity<Profile> activateOwnAccount(Principal principal) {
+        UUID userId = UUID.fromString(principal.getName());
+        Optional<Profile> profile = profileService.activateOwnAccount(userId);
+        if (profile.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(profile.get());
+    }
+
+    @PutMapping("/api/profiles/me/deactivate")
+    public ResponseEntity<Profile> deactivateOwnAccount(Principal principal) {
+        UUID userId = UUID.fromString(principal.getName());
+        Optional<Profile> profile = profileService.deactivateOwnAccount(userId);
+        if (profile.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(profile.get());
+    }
 }

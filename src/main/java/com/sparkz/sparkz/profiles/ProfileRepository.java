@@ -80,4 +80,53 @@ public class ProfileRepository {
         }
         return findByUserId(userId);
     }
+
+    /**
+     * Sets account_status for an existing profile. Returns the updated
+     * Profile, or empty if no profile exists for that user id (so the
+     * caller can turn that into a 404 instead of silently doing nothing).
+     */
+    public Optional<Profile> updateAccountStatus(UUID userId, String accountStatus) {
+        int rowsUpdated =
+            jdbcClient
+                .sql(
+                    """
+                    UPDATE profiles
+                    SET account_status = :accountStatus,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = :userId
+                    """)
+                .param("accountStatus", accountStatus)
+                .param("userId", userId)
+                .update();
+
+        if (rowsUpdated == 0) {
+            return Optional.empty();
+        }
+        return findByUserId(userId);
+    }
+
+    /**
+     * Marks onboarding as completed. One-way: there is no method to set it
+     * back to false, since onboarding completion is a one-time event, not a
+     * toggle.
+     */
+    public Optional<Profile> completeOnboarding(UUID userId) {
+        int rowsUpdated =
+            jdbcClient
+                .sql(
+                    """
+                    UPDATE profiles
+                    SET onboarding_completed = true,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = :userId
+                    """)
+                .param("userId", userId)
+                .update();
+
+        if (rowsUpdated == 0) {
+            return Optional.empty();
+        }
+        return findByUserId(userId);
+    }
 }
