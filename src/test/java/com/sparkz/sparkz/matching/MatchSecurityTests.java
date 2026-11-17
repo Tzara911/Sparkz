@@ -21,7 +21,8 @@ class MatchSecurityTests {
         for (String path : java.util.List.of("/api/users/me", "/api/profiles/me",
                 "/api/profiles/me/skills", "/api/skills", "/api/skills/1",
                 "/api/discovery", "/api/discovery/00000000-0000-0000-0000-000000000002",
-                "/api/profiles/me/availability", "/api/profiles/me/availability/days")) {
+                "/api/profiles/me/availability", "/api/profiles/me/availability/days",
+                "/api/learning-sessions", "/api/learning-sessions/1")) {
             mvc.perform(get(path)).andExpect(status().isForbidden());
             mvc.perform(put(path)).andExpect(status().isForbidden());
             mvc.perform(get(path).header("Authorization", "Bearer forged-token"))

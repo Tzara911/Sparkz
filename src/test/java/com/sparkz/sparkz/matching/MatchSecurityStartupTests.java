@@ -26,7 +26,7 @@ class MatchSecurityStartupTests {
 
     @Test void fullApplicationStartsAndDeniesProtectedRoutesWithoutAnIssuer() throws Exception {
         for (String path : java.util.List.of("/api/match-requests", "/api/users/me",
-                "/api/profiles/me", "/api/skills")) {
+                "/api/profiles/me", "/api/skills", "/api/learning-sessions", "/api/learning-sessions/1")) {
             mvc.perform(get(path)).andExpect(status().isForbidden());
         }
     }

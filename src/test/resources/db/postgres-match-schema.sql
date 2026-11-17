@@ -49,6 +49,21 @@ create table public.blocked_users (
     primary key (blocker_id, blocked_id),
     check (blocker_id <> blocked_id)
 );
+create table public.learning_sessions (
+    session_id bigint generated always as identity primary key,
+    match_request_id bigint not null references public.match_requests(request_id),
+    proposed_by uuid not null,
+    teacher_id uuid not null references public.profiles(user_id),
+    learner_id uuid not null references public.profiles(user_id),
+    scheduled_start timestamptz not null,
+    scheduled_end timestamptz not null,
+    mode text not null check (mode in ('online', 'in-person')),
+    location text,
+    meeting_url text,
+    status text not null default 'pending' check (status in ('pending', 'accepted', 'canceled', 'declined')),
+    created_at timestamptz not null default now(),
+    message text
+);
 create table public.profile_available_days (
     user_id uuid not null references public.profiles(user_id),
     day_of_week smallint not null check (day_of_week between 1 and 7),

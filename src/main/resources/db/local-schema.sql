@@ -42,6 +42,22 @@ create table match_requests (
 );
 create index match_requests_incoming on match_requests(receiver_id, created_at);
 create index match_requests_outgoing on match_requests(sender_id, created_at);
+-- #18 follows the supplied learning_sessions columns and stored values.
+create table learning_sessions (
+    session_id bigint generated always as identity primary key,
+    match_request_id bigint not null references match_requests(request_id),
+    proposed_by uuid not null,
+    teacher_id uuid not null references profiles(user_id),
+    learner_id uuid not null references profiles(user_id),
+    scheduled_start timestamp with time zone not null,
+    scheduled_end timestamp with time zone not null,
+    mode text not null check (mode in ('online', 'in-person')),
+    location text,
+    meeting_url text,
+    status text not null default 'pending' check (status in ('pending', 'accepted', 'canceled', 'declined')),
+    created_at timestamp with time zone not null default current_timestamp,
+    message text
+);
 create table blocked_users (
     blocker_id uuid not null references profiles(user_id) on delete cascade,
     blocked_id uuid not null references profiles(user_id) on delete cascade,

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff5df">
+  <title>Welcome to Sparkz</title>
+  <link rel="stylesheet" href="/sparkz-theme.css">
+  <link rel="stylesheet" href="/login.css">
+  <script src="/login.js" defer></script>
+</head>
+<body class="login-page">
+  <main class="login-layout">
+    <section class="login-art" aria-label="Welcome to Sparkz">
+      <div class="checker checker-top" aria-hidden="true"></div>
+      <a class="login-brand" href="/" aria-label="Sparkz home">sparkz<span aria-hidden="true">✦</span></a>
+      <p class="script-kicker">a little give. a little grow.</p>
+      <h1>Good things<br>start with<br><em>sharing.</em></h1>
+      <p class="art-copy">Find your people, trade your talents, and make something wonderful together.</p>
+      <div class="sunburst" aria-hidden="true">✳</div>
+      <div class="checker checker-bottom" aria-hidden="true"></div>
+    </section>
+    <section class="login-card-wrap">
+      <div class="login-card">
+        <p class="script-kicker">pull up a chair</p>
+        <h2>Welcome back!</h2>
+        <p class="login-intro">Your next favorite connection is just around the corner.</p>
+        <form id="login-form">
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="username" placeholder="you@example.com" required>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>
+          <button type="submit" class="login-submit">Let's get sparking <span aria-hidden="true">→</span></button>
+        </form>
+        <p id="login-message" class="login-message" role="status" aria-live="polite"></p>
+        <p class="login-footnote">New around here? <a href="/browse.html">Explore Sparkz</a></p>
+        <p class="demo-note">Use your Sparkz account to continue. You can explore the site before signing in.</p>
+      </div>
+      <div class="checker checker-card" aria-hidden="true"></div>
+    </section>
+  </main>
+</body>
+</html>

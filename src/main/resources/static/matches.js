@@ -19,6 +19,7 @@
         const response = await fetch('/api/match-session');
         if (!response.ok) throw new Error('Please sign in to manage match requests.');
         session = await response.json();
+        window.dispatchEvent(new Event('sparkz:auth-changed'));
       }
       if (options.method) headers[session.csrfHeader] = session.csrfToken;
     }
@@ -66,6 +67,11 @@
             actions.append(button);
           }
           card.append(actions);
+        }
+        if (row.status === 'Accepted') {
+          const link = element('a', 'Schedule a session →', 'schedule-session-link');
+          link.href = `/sessions.html?${new URLSearchParams({matchRequestId:row.id})}`;
+          card.append(link);
         }
         byId('requests').append(card);
       }
