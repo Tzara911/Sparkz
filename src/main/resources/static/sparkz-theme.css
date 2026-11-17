@@ -46,7 +46,7 @@ button { color: var(--brown); }
 .primary-nav a, .profile-nav { font: inherit; color: var(--brown); background: none; text-decoration: none; font-size: 17px; font-weight: 700; border: 0; border-radius: 24px; padding: 9px 20px; white-space: nowrap; }
 .primary-nav a[aria-current='page'] { background: var(--peach); }
 .primary-nav a:hover, .profile-nav:hover { background: #ffe7c8; }
-.user-avatar { justify-self: end; border: 0; border-radius: 50%; width: 44px; height: 44px; background: #ffd1a2; font-family: 'Yellowtail', cursive; font-size: 29px; }
+.user-avatar { justify-self: end; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; border: 0; border-radius: 50%; width: 44px; height: 44px; background: #ffd1a2; font-family: 'Yellowtail', cursive; font-size: 29px; }
 main { width: min(1360px, calc(100% - 80px)); margin: 0 auto; flex: 1; }
 .site-footer { margin: 44px 40px 0; border-top: 1px solid var(--line); }
 .footer-inner { display: flex; justify-content: center; align-items: center; gap: 28px; min-height: 82px; max-width: 1360px; margin: auto; }
@@ -55,12 +55,6 @@ main { width: min(1360px, calc(100% - 80px)); margin: 0 auto; flex: 1; }
 .footer-spark { color: var(--orange-ink); font-size: 26px; }
 .skip-link { position: fixed; top: 8px; left: 12px; z-index: 10; padding: 12px 18px; background: var(--brown); color: var(--cream); transform: translateY(-160%); border-radius: 8px; }
 .skip-link:focus { transform: translateY(0); }
-.profile-dialog { color: var(--brown); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 30px; width: min(460px, calc(100% - 32px)); max-height: calc(100dvh - 40px); }
-.profile-dialog::backdrop { background: #3c1c0c66; }
-.profile-dialog h2 { font-size: 26px; margin: 6px 40px 20px 0; }
-.profile-dialog p { color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
-.dialog-close { position: absolute; right: 18px; top: 18px; width: 36px; height: 36px; border: 1px solid var(--line); background: var(--cream); border-radius: 50%; font-size: 22px; }
-.profile-dialog .profile-name { color: var(--brown); font-size: 21px; font-weight: 700; }
 @media (max-width: 900px) {
   .primary-nav { gap: 4px; }
   .primary-nav a, .profile-nav { font-size: 15px; padding: 9px 14px; }
