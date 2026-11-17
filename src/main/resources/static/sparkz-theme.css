@@ -81,7 +81,6 @@ main { width: min(1360px, calc(100% - 80px)); margin: 0 auto; flex: 1; }
 .profile-dialog h2 { font-size: 26px; margin: 6px 40px 20px 0; }
 .profile-dialog p { color: var(--muted); line-height: 1.6; margin: 16px 0; overflow-wrap: anywhere; }
 .dialog-close { position: absolute; right: 18px; top: 18px; width: 36px; height: 36px; border: 1px solid var(--line); background: var(--cream); border-radius: 50%; font-size: 22px; }
-.profile-dialog .profile-name { color: var(--brown); font-size: 21px; font-weight: 700; }
 .provider-sign-in, .auth-retry { display: block; width: 100%; font: inherit; color: var(--brown); border: 1px solid var(--line); border-radius: 11px; padding: 12px 16px; }
 .provider-sign-in { margin-top: 24px; background: var(--orange); border-color: var(--orange); font-weight: 750; }
 .provider-sign-in:hover:not(:disabled) { background: var(--orange-hover); }

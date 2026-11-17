@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff9e9"><title>My profile · Sparkz</title>
+  <link rel="stylesheet" href="/sparkz-theme.css"><link rel="stylesheet" href="/profile.css">
+  <script src="/sparkz-shell.js" defer></script><script src="/profile.js" defer></script>
+</head>
+<body data-page="profile">
+<a class="skip-link" href="#main">Skip to content</a><div data-sparkz-header></div>
+<main id="main" class="profile-page">
+  <h1>My profile</h1><p>Keep your info current so the right people can find you.</p>
+  <p id="profile-message" role="status" aria-live="polite"></p>
+
+  <section aria-labelledby="edit-title">
+    <h2 id="edit-title">Edit profile</h2>
+    <form id="profile-form">
+      <label>Username<input id="username" required></label>
+      <label>Email<input id="email" type="email" required></label>
+      <label>First name<input id="firstName"></label>
+      <label>Last name<input id="lastName"></label>
+      <label>School<input id="schoolName"></label>
+      <label>Grade / year<input id="gradeYear"></label>
+      <label>Address<input id="address"></label>
+      <label>Phone<input id="phone"></label>
+      <label>Date of birth<input id="dob" type="date"></label>
+      <label>Time zone<input id="timeZone" placeholder="America/Chicago"></label>
+      <label class="full">Bio<textarea id="bio" rows="3"></textarea></label>
+      <label class="full">Avatar URL<input id="avatarUrl" type="url" placeholder="https://example.com/avatar.png"></label>
+      <button type="submit">Save changes</button>
+    </form>
+  </section>
+
+  <section aria-labelledby="skills-title">
+    <h2 id="skills-title">Skills</h2>
+    <div class="skills-columns">
+      <div>
+        <h3>Learning</h3>
+        <ul id="learn-list" class="skill-list"></ul>
+        <form id="add-learn-form" class="add-skill-form">
+          <label>Skill<select id="learn-skill-select" required></select></label>
+          <button type="submit">Add</button>
+        </form>
+      </div>
+      <div>
+        <h3>Teaching</h3>
+        <ul id="teach-list" class="skill-list"></ul>
+        <form id="add-teach-form" class="add-skill-form">
+          <label>Skill<select id="teach-skill-select" required></select></label>
+          <button type="submit">Add</button>
+        </form>
+      </div>
+    </div>
+    <p id="skills-message" role="status" aria-live="polite"></p>
+  </section>
+
+  <section aria-labelledby="availability-title">
+    <h2 id="availability-title">Availability</h2>
+    <p>Toggle the days you're generally free, and add specific time blocks for each.</p>
+    <div id="availability-days" class="availability-days"></div>
+    <p id="availability-message" role="status" aria-live="polite"></p>
+  </section>
+
+  <section aria-labelledby="account-title" class="account-section">
+    <h2 id="account-title">Account</h2>
+    <button id="toggle-status" type="button"></button>
+  </section>
+</main><div data-sparkz-footer></div>
+</body>
+</html>

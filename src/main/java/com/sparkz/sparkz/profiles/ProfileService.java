@@ -6,7 +6,10 @@ package com.sparkz.sparkz.profiles;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 
 @Service
@@ -23,7 +26,12 @@ public class ProfileService {
     }
 
     public Optional<Profile> updateOwnProfile(UUID userId, ProfileUpdateRequest request) {
-        Optional<Profile> updatedProfile = profileRepository.update(userId, request);
+        Optional<Profile> updatedProfile;
+        try {
+            updatedProfile = profileRepository.update(userId, request);
+        } catch (DuplicateKeyException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "That username is already taken.");
+        }
         if (updatedProfile.isEmpty()) {
             return updatedProfile;
         }

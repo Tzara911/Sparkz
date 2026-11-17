@@ -141,6 +141,25 @@ class ProfileControllerTests {
     }
 
     @Test
+    void rejectsUpdateWithAUsernameAlreadyTakenByAnotherUser() throws Exception {
+        String takenUsernameJson =
+            """
+            {
+              "username": "demo_teacher",
+              "email": "lee.updated@example.com"
+            }
+            """;
+
+        mockMvc
+            .perform(
+                put("/api/profiles/me")
+                    .with(httpBasic(LocalLoginConfig.DEMO_USER_2, "local-demo")).with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(takenUsernameJson))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
     void deactivatesTheAuthenticatedUsersOwnAccount() throws Exception {
         mockMvc
             .perform(

@@ -20,7 +20,7 @@
       <button class="account-toggle" type="button" hidden aria-label="Profile menu" aria-haspopup="menu" aria-expanded="false" aria-controls="sparkz-account-menu"><span class="account-avatar" aria-hidden="true"></span><span class="account-label">Profile</span>${chevron}</button>
       <div class="account-menu" id="sparkz-account-menu" role="menu" aria-label="Account" hidden>
         <p class="account-name" role="presentation"></p>
-        <button type="button" role="menuitem" data-shell-profile>My profile</button>
+        <a role="menuitem" href="/profile.html"${page === 'profile' ? ' aria-current="page"' : ''}>My profile</a>
         <button type="button" role="menuitem" disabled aria-disabled="true">Account settings <span class="menu-note">Coming soon</span></button>
         ${hasAvailabilityPage ? `<a role="menuitem" href="/availability.html"${page === 'availability' ? ' aria-current="page"' : ''}>Manage availability</a>` : '<button type="button" role="menuitem" disabled aria-disabled="true">Manage availability <span class="menu-note">Coming soon</span></button>'}
         <button type="button" role="menuitem" data-shell-onboarding disabled aria-disabled="true">Onboarding <span class="menu-note">Coming soon</span></button>
@@ -94,12 +94,6 @@
   });
   window.matchMedia('(max-width: 1000px)').addEventListener('change', () => { closeNavigation(); closeAccount(); });
 
-  const profileDialog = document.createElement('dialog');
-  profileDialog.className = 'profile-dialog';
-  profileDialog.setAttribute('aria-labelledby', 'shell-profile-title');
-  profileDialog.innerHTML = `<form method="dialog"><button class="dialog-close" aria-label="Close profile">×</button></form><h2 id="shell-profile-title">My profile</h2><div class="profile-content" role="status" aria-live="polite"></div>`;
-  document.body.append(profileDialog);
-  profileDialog.addEventListener('close', () => (account.hidden ? login : account).focus());
   const loginDialog = document.createElement('dialog');
   loginDialog.className = 'profile-dialog auth-dialog';
   loginDialog.setAttribute('aria-labelledby', 'shell-login-title');
@@ -124,8 +118,6 @@
     signOut.title = signOut.disabled ? 'Sign-out is not available for this session yet.' : '';
     if (!authenticated) {
       closeAccount();
-      profileDialog.querySelector('.profile-content').replaceChildren();
-      if (profileDialog.open) profileDialog.close();
     } else if (loginDialog.open) loginDialog.close();
   }
   async function refreshAuth() {
@@ -182,40 +174,6 @@
     event.target.disabled = true;
     try { if (!(await refreshAuth())) updateProvider(); }
     finally { event.target.disabled = false; }
-  });
-  query('[data-shell-profile]').addEventListener('click', async () => {
-    closeAccount();
-    const content = profileDialog.querySelector('.profile-content');
-    content.textContent = 'Loading your profile…';
-    if (!profileDialog.open) profileDialog.showModal();
-    if (!(await refreshAuth())) return;
-    content.replaceChildren();
-    for (const [text, className] of profile ? [[profile.username || profile.firstName || 'Sparkz member', 'profile-name'],
-      [profile.schoolName || 'No school added yet', ''], [profile.bio || 'No introduction added yet.', '']]
-      : [['Complete your profile to get started.', '']]) {
-      const p = document.createElement('p');
-      p.textContent = text;
-      p.className = className;
-      content.append(p);
-    }
-    if (hasAvailabilityPage && profile) {
-      const current = authRevision;
-      try {
-        const token = await window.sparkzAuth?.getAccessToken();
-        const response = await fetch('/api/profiles/me/availability', {headers: {
-          Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest',
-          ...(token ? {Authorization: `Bearer ${token}`} : {})}});
-        if (!response.ok) return;
-        const availability = await response.json();
-        if (current !== authRevision || !profileDialog.open || !Array.isArray(availability.days)) return;
-        const names = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        const days = availability.days.filter(day => Number.isInteger(day) && day >= 1 && day <= 7);
-        const summary = document.createElement('p');
-        summary.className = 'profile-availability';
-        summary.textContent = days.length ? `Generally available: ${days.map(day => names[day]).join(', ')}` : 'No general available days added yet.';
-        content.append(summary);
-      } catch (_) { /* Keep profile details available if the optional day summary fails. */ }
-    }
   });
   signOut.addEventListener('click', async () => {
     if (typeof window.sparkzAuth?.signOut !== 'function') return;
