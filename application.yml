@@ -1,0 +1,27 @@
+supabase:
+  url: ${SUPABASE_URL}                           # https://<project-ref>.supabase.co
+  publishable-key: ${SUPABASE_PUBLISHABLE_KEY}   # public by design; served to the login page
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Spring validates the access tokens that Supabase Auth issues, using Supabase's public keys.
+          jwk-set-uri: ${SUPABASE_URL}/auth/v1/.well-known/jwks.json
+          issuer-uri: ${SUPABASE_URL}/auth/v1
+          jws-algorithms: ES256,RS256            # Supabase signing keys are ES256 or RS256
+
+  datasource:
+    # Project > Connect > Direct tab > Session pooler
+    # Example: jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
+    url: ${SUPABASE_DB_URL}
+    username: ${SUPABASE_DB_USERNAME}                # postgres.<project-ref>
+    password: ${SUPABASE_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: none                             # schema is managed in Supabase
+    open-in-view: false
