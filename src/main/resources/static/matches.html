@@ -10,12 +10,22 @@
 <a class="skip-link" href="#main">Skip to content</a><div data-sparkz-header></div>
 <main id="main" class="requests-page">
   <h1>Match requests</h1><p>Exchange skills. Start a conversation. Find your next learning partner.</p>
-  <section aria-labelledby="connect-title"><h2 id="connect-title">Make a connection</h2>
-    <form id="send-form"><label>Partner ID<input id="receiver" name="receiver" required placeholder="User ID from their profile"></label><label>Skill ID<input id="skill" name="skill" type="number" min="1" step="1" required></label><button type="submit">Send request <span aria-hidden="true">→</span></button></form>
+  <section class="connection-panel" aria-labelledby="connect-title">
+    <div class="connection-heading"><h2 id="connect-title">Make a connection</h2><a href="/browse.html">Browse people <span aria-hidden="true">→</span></a></div>
+    <p id="connection-state" class="connection-state" role="status" aria-live="polite">Choose someone in Browse and click Connect to start a skill exchange.</p>
+    <form id="send-form" hidden>
+      <div class="connection-person"><span id="connection-avatar" class="connection-avatar" aria-hidden="true"></span><div><h3 id="connection-name"></h3><p id="connection-school"></p></div></div>
+      <label for="skill">Skill to exchange<select id="skill" name="skill" required disabled><option value="">Choose a skill</option></select></label>
+      <p id="connection-reason" class="connection-reason" aria-live="polite"></p>
+      <button id="send-request" type="submit" disabled>Send request <span aria-hidden="true">→</span></button>
+    </form>
+    <button id="connection-retry" type="button" class="connection-retry" hidden>Try again</button>
   </section>
   <p id="message" role="status" aria-live="polite"></p>
   <nav class="request-tabs" aria-label="Request direction"><button id="incoming" aria-pressed="true">Incoming</button><button id="outgoing" aria-pressed="false">Outgoing</button><button id="refresh">Refresh</button></nav>
+  <p id="requests-message" class="requests-message" role="status" aria-live="polite"></p>
   <div id="requests" aria-live="polite"></div>
+  <noscript><p>Enable JavaScript to view and send match requests.</p></noscript>
 </main><div data-sparkz-footer></div>
 </body>
 </html>

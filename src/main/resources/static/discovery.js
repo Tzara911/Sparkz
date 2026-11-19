@@ -80,7 +80,8 @@
           link.href = `/matches.html?${new URLSearchParams({receiverId: person.userId, skillId: skill.skillId})}`;
           link.setAttribute('aria-label', `Connect with ${person.firstName || name} over ${skill.skillName}`);
         };
-        setSkill(compatible.values().next().value);
+        const initialSkill = compatible.get(Number(byId('skill').value)) || compatible.values().next().value;
+        setSkill(initialSkill);
         if (compatible.size > 1) {
           const label = element('label', 'Connect over', 'skill-choice');
           const select = element('select', '');
@@ -89,6 +90,7 @@
             option.value = String(skill.skillId);
             select.append(option);
           }
+          select.value = String(initialSkill.skillId);
           select.addEventListener('change', () => setSkill([...compatible.values()].find(s => String(s.skillId) === select.value)));
           label.append(select);
           actions.append(label);

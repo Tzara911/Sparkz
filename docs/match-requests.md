@@ -1,5 +1,30 @@
 # Match requests (Issue #8)
 
+## Browse to connect
+
+Open Browse, choose a person and a compatible skill, then click **Connect**.
+Match requests loads the person's current public profile and displays their name,
+school, and compatible teaching/learning skills. The selected skill carries over
+from Browse; the dropdown lets you change it before sending. The explanation
+below the dropdown indicates whether you can learn from or share with this person.
+There are no Partner ID or Skill ID inputs.
+
+Opening `/matches.html` directly shows a Browse link and the incoming/outgoing
+lists. A missing, unavailable, or blocked profile cannot be submitted. An obsolete
+skill selection must be replaced with a currently compatible skill. Pending or
+accepted pairs cannot send another request. Server validation remains authoritative.
+
+Request cards resolve names and schools through the existing authenticated
+Discovery profile endpoint and skill names through `/api/skills`. If a profile is
+unavailable, cards show a neutral placeholder without exposing its ID. Accept is
+disabled when those details or the selected skill's compatibility cannot be
+verified; decline/cancel remain available. Detail reads are limited to four at a
+time and deduplicated per list load, with no persistent cache of profile data.
+
+An unconfirmed send is checked before retrying. A confirmed send followed by a
+failed list refresh still reports that the request was sent. API paths, bodies,
+authentication, and database schema are unchanged.
+
 ## Run locally without Supabase
 
 Requires a **JDK** (not only a JRE), version 17 or later.
@@ -16,11 +41,39 @@ When prompted, sign in with one of these demo usernames, password `local-demo`:
 - `00000000-0000-0000-0000-000000000001`: teaches Java (skill ID `1`).
 - `00000000-0000-0000-0000-000000000002`: learns Java.
 
-Use separate browser profiles/private sessions for the two users. Send a request to
-the other user's ID with skill ID `1`, then accept or decline from the other browser.
+Use separate browser profiles/private sessions for the two users. As the first
+user, open Browse and click **Connect with Sam** over Java, then send the request.
+As Sam, open Match requests and accept or decline the incoming request from Alex.
 Pending outgoing requests can be canceled. Refresh to see changes from the other user.
 Local Basic authentication retains CSRF protection. Set `sparkz.local.password` to
 change the demo password. Never enable the `local` or `test` profile on a shared server.
+
+### Browser regression and previews
+
+Start a fresh disposable local-profile app with the extra discovery fixture:
+
+```sh
+bash mvnw spring-boot:run -Dspring-boot.run.profiles=local \
+  -Dspring-boot.run.arguments="--spring.sql.init.data-locations=classpath:db/local-data.sql,classpath:db/discovery-demo-data.sql"
+```
+
+With Node and Playwright available, run:
+
+```sh
+SPARKZ_BASE_URL=http://127.0.0.1:8080 node scripts/test_match_requests_frontend.cjs
+```
+
+Set `SPARKZ_CHROMIUM` to an installed Chromium executable if Playwright's browser
+is unavailable. `SPARKZ_BROWSER_ARTIFACTS` chooses the screenshot/results directory
+(default `/tmp/sparkz-matches-browser`). The suite accepts only loopback HTTP and
+uses the two disposable local accounts. It creates requests and finishes with an
+accepted pair, so restart the local app before rerunning. It never uses Supabase.
+
+Coverage includes Browse selection, compatible skill choices, duplicate submission,
+send/accept/decline/cancel through the real local API, unavailable profiles, obsolete
+skills, failed and uncertain writes, concurrent tabs, safe text rendering, Bearer
+header forwarding with controlled responses, and widths from 320 to 1440 pixels.
+The controlled Bearer test does not verify live Google login or Supabase permissions.
 
 ## HTTP contract
 
@@ -129,9 +182,15 @@ with sends/acceptance. This change does not modify live RLS or live tables.
   token (including refresh handling). The page keeps no tokens in local storage.
   `/api/match-session` exists only for the local/test demo.
 - **#7:** send to the POST API from a profile, or link to
-  `/matches.html?receiverId=<uuid>&skillId=<id>` to prefill the form.
-- **#4:** the standalone responsive page and styles can be placed inside the shared
-  navigation when it lands. Currently the repository has no shared layout.
+  `/matches.html?receiverId=<uuid>&skillId=<id>`. IDs travel internally; the page
+  resolves current profile and skill details rather than trusting display text in a URL.
+- **#4:** the page uses the same `/sparkz-shell.js` header/footer and
+  `/sparkz-theme.css` as Home and Browse. This change does not alter them.
+- **#18 / #33:** when integrating the actual Sessions page, add
+  `data-session-planner` to the Match requests body. Accepted cards then show
+  `/sessions.html?matchRequestId=<id>`. Keep the person/skill composer from this
+  change when resolving overlapping Match requests files; do not restore the
+  manual ID form. The link stays absent while Sessions is unmerged.
 - **Blocked users:** validation is included because the supplied ERD has the table.
   The table must exist; the backend does not silently skip validation when absent.
 - **Notifications:** not emitted here; event delivery belongs to the follow-up integration.
