@@ -12,9 +12,8 @@
   header.innerHTML = `<header class="site-header"><div class="header-inner">
     <a class="brand" href="/" aria-label="Sparkz home"><img src="/images/sparkz-logo.png" alt="Sparkz" width="216" height="75"></a>
     <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sparkz-navigation"><span aria-hidden="true">☰</span></button>
-    <nav class="primary-nav" id="sparkz-navigation" aria-label="Main navigation">${links.map(([key, label, href]) => key === 'sessions'
-      ? `<span class="nav-unavailable" aria-disabled="true" title="Coming soon">${label}</span>`
-      : `<a href="${href}"${key === page ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav>
+    <nav class="primary-nav" id="sparkz-navigation" aria-label="Main navigation">${links.map(([key, label, href]) =>
+      `<a href="${href}"${key === page ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav>
     <div class="account-wrap">
       ${hasLoginPage ? '<a class="login-button" href="/login.html">Login</a>' : '<button class="login-button" type="button" disabled aria-busy="true">Login</button>'}
       <button class="account-toggle" type="button" hidden aria-label="Profile menu" aria-haspopup="menu" aria-expanded="false" aria-controls="sparkz-account-menu"><span class="account-avatar" aria-hidden="true"></span><span class="account-label">Profile</span>${chevron}</button>
