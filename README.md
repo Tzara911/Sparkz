@@ -84,6 +84,56 @@ instructions are in [the frontend guide](docs/pr32-frontend.md).
 See [availability/discovery API contract and local testing](docs/availability-discovery.md)
 for issues #16 and #7, including the #17 frontend integration contract and #8 match-request links.
 
+
+
+
+# Google sign-in via Supabase Auth + Spring Boot
+
+How it fits together:
+
+1. The browser page (`login.html`) uses supabase-js to start Google sign-in.
+2. Supabase Auth talks to Google, creates the user in `auth.users`, and returns the browser a session (a JWT).
+3. A database trigger creates the matching `profiles` row (same `user_id`).
+4. The page calls Spring with `Authorization: Bearer <JWT>`. Spring verifies the token using Supabase's public keys and loads the profile.
+
+## 1. Google Cloud Console
+Create an OAuth client ID (Web application). Authorized redirect URI:
+
+    https://<project-ref>.supabase.co/auth/v1/callback
+
+Note the client ID and secret.
+
+## 2. Supabase dashboard
+- **Authentication > Providers > Google**: enable it and paste the client ID and secret.
+- **Authentication > URL Configuration**: add `http://localhost:8080/login.html` to Redirect URLs
+  (and your deployed URL later).
+- **Project Settings > JWT Keys**: make sure the project uses asymmetric signing keys (ES256/RS256).
+  Spring verifies tokens through the JWKS endpoint, which is empty for legacy shared-secret (HS256) projects.
+
+## 3. Database
+Run `supabase-schema.sql` in the SQL Editor (read the STEP 0 check first).
+
+## 4. Run
+Get the URL and publishable key from Project Settings > API Keys (or the Connect dialog), and the
+Session pooler details from Connect > Direct.
+
+```bash
+export SUPABASE_URL='https://<project-ref>.supabase.co'
+export SUPABASE_PUBLISHABLE_KEY='sb_publishable_...'
+export SUPABASE_DB_URL='jdbc:postgresql://<pooler-host>:5432/postgres?sslmode=require'
+export SUPABASE_DB_USER='postgres.<project-ref>'
+export SUPABASE_DB_PASSWORD='your-db-password'
+./mvnw spring-boot:run
+```
+Open http://localhost:8080/login.html
+
+## Troubleshooting
+- **"Database error saving new user"** on sign-in: the trigger failed (usually a NOT NULL column or constraint on `profiles`). Check Supabase Logs > Postgres.
+- **401 from /api/me**: wrong `SUPABASE_URL`, or the project still uses a legacy HS256 secret.
+- **404 from /api/me**: signed in but no `profiles` row. The trigger isn't installed, or another trigger is failing silently.
+- **redirect_uri_mismatch** from Google: the Google console URI must be the Supabase `/auth/v1/callback` URL, not localhost.
+- **Redirected but not signed in**: `http://localhost:8080/login.html` is missing from Supabase Redirect URLs.
+
 ## Learning session scheduling
 
 See [session APIs and the local two-account demo](docs/learning-sessions.md) for
